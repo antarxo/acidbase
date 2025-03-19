@@ -49,10 +49,15 @@
 
     <script>
         let chart;
-        const ctx = document.getElementById('titrationChart');
+        // Χρησιμοποιούμε getContext για να βεβαιωθούμε ότι παίρνουμε το 2D context του canvas
+        const ctx = document.getElementById('titrationChart').getContext('2d');
         
-        // Εγγραφή Plugin Annotation
-        Chart.register(ChartAnnotation);
+        // Καταχώρηση του annotation plugin χρησιμοποιώντας window.ChartAnnotation
+        if (window.ChartAnnotation) {
+            Chart.register(window.ChartAnnotation);
+        } else {
+            console.error("Το Chart Annotation plugin δεν φορτώθηκε σωστά.");
+        }
 
         // Συνάρτηση επαναφοράς τιμών
         function resetValues() {
