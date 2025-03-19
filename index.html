@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Πραγματική Καμπύλη Ογκομέτρησης</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -49,8 +49,10 @@
 
     <script>
         let chart;
-        const ctx = document.getElementById('titrationChart').getContext('2d');
-        Chart.register(Chart.Annotation);
+        const ctx = document.getElementById('titrationChart');
+        
+        // Εγγραφή Plugin Annotation
+        Chart.register(ChartAnnotation);
 
         // Συνάρτηση επαναφοράς τιμών
         function resetValues() {
