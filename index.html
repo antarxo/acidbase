@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Πραγματική Καμπύλη Ογκομέτρησης</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -50,7 +50,7 @@
     <script>
         let chart;
         const ctx = document.getElementById('titrationChart').getContext('2d');
-        Chart.register(ChartAnnotation);
+        Chart.register(Chart.Annotation);
 
         // Συνάρτηση επαναφοράς τιμών
         function resetValues() {
@@ -61,7 +61,7 @@
             updateChart();
         }
 
-        // Υπόλοιπος κώδικας (calculatepH, updateChart) όπως στο προηγούμενο παράδειγμα
+        // Υπολογισμός pH με χημικές εξισώσεις
         function calculatepH(type, C_acid, C_base, V_acid, pKa) {
             let volumes = [];
             let pH = [];
@@ -73,6 +73,7 @@
                 let n_acid = C_acid * V_acid_L;
                 let n_base = C_base * V_base_L;
 
+                // Ισχυρό οξύ + Ισχυρή βάση
                 if (type === "strong_acid_strong_base") {
                     let excess = n_acid - n_base;
                     let totalVolume = V_acid_L + V_base_L;
@@ -83,31 +84,35 @@
                     } else {
                         pH.push(7);
                     }
-                } 
+                }
+
+                // Ασθενές οξύ + Ισχυρή βάση
                 else if (type === "weak_acid_strong_base") {
                     let n_HA = n_acid - n_base;
                     let n_A = n_base;
-                    if (n_base < n_acid) {
+                    if (n_base < n_acid) { // Πριν ισοδυναμία (ρυθμιστικό)
                         pH.push(pKa + Math.log10(n_A / Math.max(n_HA, 1e-10)));
-                    } else if (n_base === n_acid) {
+                    } else if (n_base === n_acid) { // Ισοδυναμία (υδρόλυση Α⁻)
                         let conc_A = n_A / (V_acid_L + V_base_L);
                         pH.push(14 + 0.5 * (Math.log10(Kw) + Math.log10(conc_A)));
-                    } else {
+                    } else { // Μετά ισοδυναμία (περίσσεια OH⁻)
                         let excess_OH = (n_base - n_acid) / (V_acid_L + V_base_L);
                         pH.push(14 + Math.log10(excess_OH));
                     }
                 }
+
+                // Ισχυρό οξύ + Ασθενή βάση
                 else if (type === "strong_acid_weak_base") {
                     let excess = n_acid - n_base;
                     let totalVolume = V_acid_L + V_base_L;
-                    if (excess > 0) {
+                    if (excess > 0) { // Περίσσεια H⁺
                         pH.push(-Math.log10(excess / totalVolume));
-                    } else if (excess < 0) {
+                    } else if (excess < 0) { // Υδρόλυση συζυγούς οξέος
                         let conc_NH4 = (-excess) / totalVolume;
-                        let Kb = Math.pow(10, -4.75); // Διόρθωση εδώ
+                        let Kb = Math.pow(10, -4.75); // Για NH3 (pKb = 4.75)
                         let Ka = Kw / Kb;
                         pH.push(0.5 * (pKa - Math.log10(conc_NH4)));
-                    } else {
+                    } else { // Ισοδυναμία
                         pH.push(7);
                     }
                 }
@@ -117,6 +122,7 @@
             return { volumes, pH };
         }
 
+        // Ενημέρωση γραφήματος
         function updateChart() {
             const type = document.getElementById('analysisType').value;
             const C_acid = parseFloat(document.getElementById('concAcid').value);
@@ -153,7 +159,11 @@
                                     xMax: (C_acid * V_acid / C_base),
                                     borderColor: '#1e88e5',
                                     borderWidth: 2,
-                                    label: { content: 'Σημείο Ισοδυναμίας', enabled: true }
+                                    label: { 
+                                        content: 'Σημείο Ισοδυναμίας',
+                                        enabled: true,
+                                        position: 'end'
+                                    }
                                 }
                             }
                         }
@@ -162,6 +172,7 @@
             });
         }
 
+        // Αρχική εκτέλεση
         updateChart();
     </script>
 </body>
