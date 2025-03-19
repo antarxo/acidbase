@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Πραγματική Καμπύλη Ογκομέτρησης</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1"></script> <!-- Προσθήκη Plugin για Σημείο Ισοδυναμίας -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -50,8 +50,18 @@
     <script>
         let chart;
         const ctx = document.getElementById('titrationChart').getContext('2d');
-        Chart.register(ChartAnnotation); // Εγγραφή του Plugin
+        Chart.register(ChartAnnotation);
 
+        // Συνάρτηση επαναφοράς τιμών
+        function resetValues() {
+            document.getElementById('concAcid').value = 0.1;
+            document.getElementById('concBase').value = 0.1;
+            document.getElementById('volumeAcid').value = 50;
+            document.getElementById('pKa').value = 4.76;
+            updateChart();
+        }
+
+        // Υπόλοιπος κώδικας (calculatepH, updateChart) όπως στο προηγούμενο παράδειγμα
         function calculatepH(type, C_acid, C_base, V_acid, pKa) {
             let volumes = [];
             let pH = [];
@@ -94,7 +104,7 @@
                         pH.push(-Math.log10(excess / totalVolume));
                     } else if (excess < 0) {
                         let conc_NH4 = (-excess) / totalVolume;
-                        let Kb = 1e-4.75;
+                        let Kb = Math.pow(10, -4.75); // Διόρθωση εδώ
                         let Ka = Kw / Kb;
                         pH.push(0.5 * (pKa - Math.log10(conc_NH4)));
                     } else {
@@ -150,14 +160,6 @@
                     }
                 }
             });
-        }
-
-        function resetValues() {
-            document.getElementById('concAcid').value = 0.1;
-            document.getElementById('concBase').value = 0.1;
-            document.getElementById('volumeAcid').value = 50;
-            document.getElementById('pKa').value = 4.76;
-            updateChart();
         }
 
         updateChart();
