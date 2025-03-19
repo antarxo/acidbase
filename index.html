@@ -1,1 +1,166 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Πραγματική Καμπύλη Ογκομέτρησης</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1"></script> <!-- Προσθήκη Plugin για Σημείο Ισοδυναμίας -->
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .chart-container { width: 800px; height: 500px; }
+        .param-box { background: #f0f0f0; padding: 15px; border-radius: 8px; }
+        input { width: 100px; }
+    </style>
+</head>
+<body>
+    <h1>Πραγματική Προσομοίωση Καμπύλης Ογκομέτρησης</h1>
+    
+    <div class="container">
+        <div class="chart-container">
+            <canvas id="titrationChart"></canvas>
+        </div>
 
+        <div class="param-box">
+            <h3>Παράμετροι</h3>
+            <select id="analysisType" onchange="updateChart()">
+                <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
+                <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
+                <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
+            </select>
+
+            <br><br>
+            <label>Συγκέντρωση Οξέος (M):</label>
+            <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
+
+            <label>Συγκέντρωση Βάσης (M):</label>
+            <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
+
+            <label>Όγκος Οξέος (mL):</label>
+            <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
+
+            <br><br>
+            <label>pKa (για ασθενές οξύ):</label>
+            <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()" disabled>
+
+            <button onclick="resetValues()">Επαναφορά</button>
+        </div>
+    </div>
+
+    <script>
+        let chart;
+        const ctx = document.getElementById('titrationChart').getContext('2d');
+        Chart.register(ChartAnnotation); // Εγγραφή του Plugin
+
+        function calculatepH(type, C_acid, C_base, V_acid, pKa) {
+            let volumes = [];
+            let pH = [];
+            const Kw = 1e-14;
+            const V_acid_L = V_acid / 1000;
+
+            for (let V_base = 0; V_base <= 100; V_base += 1) {
+                const V_base_L = V_base / 1000;
+                let n_acid = C_acid * V_acid_L;
+                let n_base = C_base * V_base_L;
+
+                if (type === "strong_acid_strong_base") {
+                    let excess = n_acid - n_base;
+                    let totalVolume = V_acid_L + V_base_L;
+                    if (excess > 0) {
+                        pH.push(-Math.log10(excess / totalVolume));
+                    } else if (excess < 0) {
+                        pH.push(14 + Math.log10(-excess / totalVolume));
+                    } else {
+                        pH.push(7);
+                    }
+                } 
+                else if (type === "weak_acid_strong_base") {
+                    let n_HA = n_acid - n_base;
+                    let n_A = n_base;
+                    if (n_base < n_acid) {
+                        pH.push(pKa + Math.log10(n_A / Math.max(n_HA, 1e-10)));
+                    } else if (n_base === n_acid) {
+                        let conc_A = n_A / (V_acid_L + V_base_L);
+                        pH.push(14 + 0.5 * (Math.log10(Kw) + Math.log10(conc_A)));
+                    } else {
+                        let excess_OH = (n_base - n_acid) / (V_acid_L + V_base_L);
+                        pH.push(14 + Math.log10(excess_OH));
+                    }
+                }
+                else if (type === "strong_acid_weak_base") {
+                    let excess = n_acid - n_base;
+                    let totalVolume = V_acid_L + V_base_L;
+                    if (excess > 0) {
+                        pH.push(-Math.log10(excess / totalVolume));
+                    } else if (excess < 0) {
+                        let conc_NH4 = (-excess) / totalVolume;
+                        let Kb = 1e-4.75;
+                        let Ka = Kw / Kb;
+                        pH.push(0.5 * (pKa - Math.log10(conc_NH4)));
+                    } else {
+                        pH.push(7);
+                    }
+                }
+
+                volumes.push(V_base);
+            }
+            return { volumes, pH };
+        }
+
+        function updateChart() {
+            const type = document.getElementById('analysisType').value;
+            const C_acid = parseFloat(document.getElementById('concAcid').value);
+            const C_base = parseFloat(document.getElementById('concBase').value);
+            const V_acid = parseFloat(document.getElementById('volumeAcid').value);
+            const pKa = parseFloat(document.getElementById('pKa').value);
+            document.getElementById('pKa').disabled = (type !== "weak_acid_strong_base");
+
+            const data = calculatepH(type, C_acid, C_base, V_acid, pKa);
+            
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.volumes,
+                    datasets: [{
+                        label: 'pH',
+                        data: data.pH,
+                        borderColor: '#e53935',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: { 
+                        y: { min: 0, max: 14, title: { display: true, text: 'pH' } },
+                        x: { title: { display: true, text: 'Όγκος Βάσης (mL)' } }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                equivalencePoint: {
+                                    type: 'line',
+                                    xMin: (C_acid * V_acid / C_base),
+                                    xMax: (C_acid * V_acid / C_base),
+                                    borderColor: '#1e88e5',
+                                    borderWidth: 2,
+                                    label: { content: 'Σημείο Ισοδυναμίας', enabled: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetValues() {
+            document.getElementById('concAcid').value = 0.1;
+            document.getElementById('concBase').value = 0.1;
+            document.getElementById('volumeAcid').value = 50;
+            document.getElementById('pKa').value = 4.76;
+            updateChart();
+        }
+
+        updateChart();
+    </script>
+</body>
+</html>
