@@ -17,24 +17,27 @@
     let dropActive = false;  // αν η σταγόνα κινείται
     let dropSpeed = 5;       // ταχύτητα της σταγόνας
     
-    // Σταθερές για τις διαστάσεις
-    let pipetteX = 100;      // τοποθετεί το pipet στην αριστερή πλευρά ώστε να μην "κάπτεται" πάνω από το beaker
+    // Σταθερές για τις διαστάσεις του pipet
+    let pipetteX = 100;      
     let pipetteY = 120;
     let pipetteW = 80, pipetteH = 150;
     
     // Διαστάσεις του beaker (εικόνα)
     let beakerW = 150, beakerH = 250;
-    // Ορίζουμε το κέντρο του beaker σε θέση σταθερή ώστε το περιεχόμενο να τοποθετείται σωστά μέσα
-    let beakerY = 400;  // τοποθετημένο έτσι ώστε να υπάρχει χώρος για το υγρό
+    // Offset μεταξύ του pipet και του beaker
+    let beakerOffset = 20;
+    // Η θέση του beaker υπολογίζεται δυναμικά: 
+    // pipetteBottom + beakerH/2 + offset
+    let beakerY;  
     
     // Παράμετροι για το σχεδιασμό του υγρού
     let scaleFactor = 10; // παράγοντας κλίμακας για τις διαστάσεις της έλλειψης
-    // Οι φυσικές διαστάσεις της έλλειψης που ορίζουν το πλάτος του υγρού:
+    // Διαστάσεις της έλλειψης που ορίζουν το πλάτος του υγρού:
     let liquidEllipseWidth = 6.36 * scaleFactor;
     let liquidEllipseHeight = 1.93 * scaleFactor;
-    // Ορισμός offsets για να τοποθετήσουμε σωστά το περιεχόμενο μέσα στο beaker:
-    let bottomOffset = 15; // απόσταση από το κάτω μέρος του beaker (για την κάτω έλλειψη)
-    let topOffset = 20;    // απόσταση από το πάνω μέρος του beaker (όριο για το γεμάτο)
+    // Offsets για το εσωτερικό του beaker:
+    let bottomOffset = 15; // απόσταση από το κάτω μέρος του beaker για την κάτω έλλειψη
+    let topOffset = 20;    // απόσταση από το πάνω μέρος του beaker για το ανώτερο όριο
     
     // Αρχική θέση για τη σταγόνα (ξεκινά κοντά στο pipet)
     let initialDropY = 100;
@@ -57,6 +60,10 @@
     function setup() {
       createCanvas(400, 600);
       console.log("Setup executed, canvas created");
+      
+      // Υπολογισμός του κάτω μέρους του pipet και θέσης του beaker
+      let pipetteBottom = pipetteY + pipetteH / 2;
+      beakerY = pipetteBottom + beakerH / 2 + beakerOffset;
       
       // Αρχικοποίηση της θέσης της σταγόνας
       dropY = initialDropY;
@@ -84,7 +91,7 @@
         console.error("pipetteImg is not loaded");
       }
       
-      // Σχεδίαση του beaker στο κέντρο του καμβά με σταθερή θέση (beakerY)
+      // Σχεδίαση του beaker στο κέντρο οριζόντια αλλά με θέση beakerY που υπολογίστηκε δυναμικά
       imageMode(CENTER);
       if(beakerImg) {
         image(beakerImg, width/2, beakerY, beakerW, beakerH);
@@ -101,8 +108,7 @@
       if(dropActive) {
         drawDrop();
         dropY += dropSpeed;
-        // Ορίζουμε το όριο όπου θεωρούμε πως η σταγόνα έφτασε στο beaker
-        // Το όριο βασίζεται στο κάτω όριο του υγρού που σχεδιάζεται στο beaker
+        // Υπολογισμός του ορίου για την προσθήκη του υγρού, βασισμένο στο κάτω όριο του beaker
         let bottomLiquidY = beakerY + beakerH/2 - bottomOffset;
         if(dropY > bottomLiquidY - liquidEllipseHeight/2) {
           dropActive = false;
@@ -115,11 +121,11 @@
     
     // Συνάρτηση για σχεδίαση του υγρού μέσα στο ποτήρι
     // Το υγρό αποτελείται από:
-    // 1. Ένα ορθογώνιο που έχει πλάτος ίσο με το πλάτος της έλλειψης και εκτείνεται από τον οριζόντιο άξονα της κάτω έλλειψης μέχρι τον οριζόντιο άξονα της πάνω μετακινούμενης έλλειψης.
+    // 1. Ένα ορθογώνιο που έχει πλάτος ίσο με το πλάτος της έλλειψης και εκτείνεται από τον οριζόντιο άξονα της κάτω έλλειψης έως την πάνω μετακινούμενη έλλειψη.
     // 2. Μία σταθερή έλλειψη στον πυθμένα.
-    // 3. Μία πάνω έλλειψη που μετακινείται ανάλογα με το γεμάτο.
+    // 3. Μία πάνω έλλειψη που μετακινείται ανάλογα με το επίπεδο γεμίσματος.
     function drawLiquid() {
-      // Υπολογισμός θέσεων μέσα στο beaker
+      // Υπολογισμός των ορίων μέσα στο beaker
       let bottomLiquidY = beakerY + beakerH/2 - bottomOffset;  // οριζόντιος άξονας για την κάτω (σταθερή) έλλειψη
       let topLiquidLimit = beakerY - beakerH/2 + topOffset;      // το μέγιστο σημείο που μπορεί να φτάσει το υγρό
       let maxLiquidHeight = bottomLiquidY - topLiquidLimit;
@@ -129,10 +135,9 @@
       let topLiquidY = bottomLiquidY - liquidHeight;
       
       noStroke();
-      fill(30, 136, 229); // solid χρώμα, χωρίς διαφάνεια
+      fill(30, 136, 229); // solid χρώμα
       
-      // Σχεδίαση του ορθογωνίου υγρού με πλάτος ίσο με το πλάτος της έλλειψης,
-      // από τον οριζόντιο άξονα της κάτω έλλειψης (bottomLiquidY) έως αυτόν της πάνω μετακινούμενης έλλειψης (topLiquidY)
+      // Σχεδίαση του ορθογωνίου του υγρού
       rectMode(CORNER);
       rect(width/2 - liquidEllipseWidth/2, topLiquidY, liquidEllipseWidth, liquidHeight);
       
@@ -149,7 +154,6 @@
       push();
       fill(30, 136, 229);
       noStroke();
-      // Η σταγόνα σχεδιάζεται να βγαίνει από το pipet (στην ίδια οριζόντια θέση του pipet)
       ellipse(pipetteX, dropY, 10, 15);
       pop();
     }
