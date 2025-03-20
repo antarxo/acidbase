@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση με pipet3 & breaker3 (Hidden Base Ellipse & Adjusted Position)</title>
+  <title>Προσομοίωση με pipet3 & breaker3 (Updated Ellipse & Position)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -87,25 +87,38 @@
       let liquidFillHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
       let topLiquidY = containerBottom - liquidFillHeight;
       
-      let liquidX = breakerX + (breakerScaledW - liquidWidth) / 2 - 4; // Μετακινήθηκε 4 pixels αριστερά
+      let liquidX = breakerX + (breakerScaledW - liquidWidth) / 2 - 14; // Όλο το περιεχόμενο πήγε 10 αριστερότερα
       
+      // 1. Σχεδίαση του ορθογωνίου υγρού
       noStroke();
       fill(30, 136, 229);
       rectMode(CORNER);
       rect(liquidX, topLiquidY, liquidWidth, liquidFillHeight);
       
-      ellipseMode(CENTER);
-      ellipse(liquidX + liquidWidth/2, topLiquidY, liquidWidth, liquidHeight);
-      
+      // 2. Σχεδίαση της κάτω έλλειψης (σταθερή, αν έχει προστεθεί υγρό)
       if (showBaseEllipse) {
-        ellipse(liquidX + liquidWidth/2, containerBottom, liquidWidth, liquidHeight);
+        noStroke();
+        fill(30, 136, 229);
+        ellipseMode(CENTER);
+        ellipse(liquidX + liquidWidth / 2, containerBottom, liquidWidth, liquidHeight);
       }
       
+      // 3. Σχεδίαση του ποτηριού (πάνω από το υγρό)
       imageMode(CORNER);
       image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       
+      // 4. Σχεδίαση της πάνω έλλειψης με περίγραμμα (πάνω από το ορθογώνιο)
+      stroke(180); // Απαλό γκρι περίγραμμα
+      strokeWeight(1);
+      fill(30, 136, 229);
+      ellipseMode(CENTER);
+      ellipse(liquidX + liquidWidth / 2, topLiquidY, liquidWidth, liquidHeight);
+      noStroke();
+      
+      // 5. Σχεδίαση του pipet3 (πάνω από το ποτήρι)
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
+      // 6. Σχεδίαση και κίνηση της σταγόνας
       if(dropActive) {
         drawDrop();
         dropY += dropSpeed;
