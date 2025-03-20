@@ -2,24 +2,33 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Ζωντανή Προσομοίωση Ογκομέτρησης</title>
+  <title>Ζωντανή Προσομοίωση Ογκομέτρησης - Ενσωματωμένα Γραφικά</title>
   <!-- Chart.js και το annotation plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .container { display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
     .chart-container { width: 800px; height: 500px; }
-    .param-box, .interactive-box { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .param-box { background: #f0f0f0; padding: 15px; border-radius: 8px; }
     input, select { width: 100px; }
     label { display: inline-block; width: 140px; }
-    /* Στυλ για το ποτήρι */
+    /* Ενσωματωμένα γραφικά στοιχεία μικρού μεγέθους μέσα στο παράθυρο παραμέτρων */
+    .graphics-container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    .graphic-element {
+      text-align: center;
+    }
+    /* Μικρότερο ποτήρι */
     .glass-container {
       position: relative;
-      width: 150px;
-      height: 300px;
+      width: 100px;
+      height: 180px;
       border: 2px solid #333;
-      border-radius: 0 0 10px 10px;
+      border-radius: 0 0 8px 8px;
       overflow: hidden;
       background: #fff;
       margin: 0 auto;
@@ -31,29 +40,29 @@
       background: rgba(30, 136, 229, 0.6);
       transition: height 0.5s ease;
     }
-    /* Στυλ για την προχοΐδα */
+    /* Μικρότερη προχοΐδα */
     .dropper-container {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
     .dropper {
-      width: 50px;
-      height: 150px;
+      width: 30px;
+      height: 90px;
       background: #ccc;
       border: 2px solid #333;
-      border-radius: 20px;
+      border-radius: 15px;
       position: relative;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
     .dropper::after {
       content: "";
       position: absolute;
-      top: -20px;
+      top: -15px;
       left: 50%;
       transform: translateX(-50%);
-      width: 30px;
-      height: 30px;
+      width: 20px;
+      height: 20px;
       border: 2px solid #333;
       border-radius: 50%;
       background: #eee;
@@ -63,75 +72,76 @@
       from { transform: translateX(-50%) rotate(0deg); }
       to { transform: translateX(-50%) rotate(360deg); }
     }
-    .solution-select { margin-top: 5px; }
   </style>
 </head>
 <body>
   <h1>Ζωντανή Προσομοίωση Ογκομέτρησης</h1>
   
-  <!-- Πεδίο επιλογής διαλύματος για το ποτήρι -->
-  <div class="interactive-box">
-    <h3>Ποτήρι - Ογκομετρόμενο Διάλυμα</h3>
-    <div class="glass-container">
-      <div id="glassFill" class="glass-fill" style="height: 0%;"></div>
-    </div>
-    <div class="solution-select">
-      <label for="glassSolution">Επιλογή Διαλύματος:</label>
-      <select id="glassSolution">
-        <option value="διάλυμα 1">Διάλυμα 1</option>
-        <option value="διάλυμα 2">Διάλυμα 2</option>
-        <option value="διάλυμα 3">Διάλυμα 3</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Πεδίο επιλογής διαλύματος για την προχοΐδα -->
-  <div class="interactive-box">
-    <h3>Προχοΐδα - Διάλυμα που Προστίθεται</h3>
-    <div class="dropper-container">
-      <div class="dropper"></div>
-      <div class="solution-select">
-        <label for="dropperSolution">Επιλογή Διαλύματος:</label>
-        <select id="dropperSolution">
-          <option value="διάλυμα Α">Διάλυμα Α</option>
-          <option value="διάλυμα Β">Διάλυμα Β</option>
-          <option value="διάλυμα Γ">Διάλυμα Γ</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  
   <div class="container">
     <div class="chart-container">
       <canvas id="titrationChart"></canvas>
     </div>
-
+    
+    <!-- Παράθυρο Παραμέτρων με ενσωματωμένα γραφικά στοιχεία -->
     <div class="param-box">
-      <h3>Παράμετροι</h3>
-      <label for="analysisType">Τύπος Ανάλυσης:</label>
-      <select id="analysisType" onchange="updateChart(); updateLabel();">
-        <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
-        <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-        <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
-        <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
-      </select>
-      <br><br>
-      <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
-      <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
-      <br>
-      <label for="concBase">Συγκέντρωση Βάσης (M):</label>
-      <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
-      <br>
-      <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
-      <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
-      <br>
-      <label for="pKa" id="pKaLabel">pKa:</label>
-      <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
-      <br><br>
-      <label for="stepSize">Βήμα προσθήκης (mL):</label>
-      <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
-      <br><br>
-      <button onclick="resetValues()">Επαναφορά</button>
+      <h3>Παράμετροι & Γραφικά Στοιχεία</h3>
+      <div class="graphics-container">
+        <!-- Γραφικό ποτήρι -->
+        <div class="graphic-element">
+          <div class="glass-container">
+            <div id="glassFill" class="glass-fill" style="height: 0%;"></div>
+          </div>
+          <div>
+            <label for="glassSolution">Διάλυμα:</label>
+            <select id="glassSolution">
+              <option value="διάλυμα 1">1</option>
+              <option value="διάλυμα 2">2</option>
+              <option value="διάλυμα 3">3</option>
+            </select>
+          </div>
+        </div>
+        <!-- Γραφικό προχοΐδας -->
+        <div class="graphic-element">
+          <div class="dropper-container">
+            <div class="dropper"></div>
+            <div>
+              <label for="dropperSolution">Διάλυμα:</label>
+              <select id="dropperSolution">
+                <option value="διάλυμα Α">Α</option>
+                <option value="διάλυμα Β">Β</option>
+                <option value="διάλυμα Γ">Γ</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <label for="analysisType">Τύπος Ανάλυσης:</label>
+        <select id="analysisType" onchange="updateChart(); updateLabel();">
+          <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
+          <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
+          <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
+          <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
+        </select>
+        <br><br>
+        <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
+        <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
+        <br>
+        <label for="concBase">Συγκέντρωση Βάσης (M):</label>
+        <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
+        <br>
+        <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
+        <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
+        <br>
+        <label for="pKa" id="pKaLabel">pKa:</label>
+        <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
+        <br><br>
+        <label for="stepSize">Βήμα προσθήκης (mL):</label>
+        <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
+        <br><br>
+        <button onclick="resetValues()">Επαναφορά</button>
+      </div>
     </div>
   </div>
 
@@ -157,7 +167,7 @@
       document.getElementById('stepSize').value = 1;
       updateChart();
       updateLabel();
-      updateGlassFill(0); // Επαναφορά του ποτηριού
+      updateGlassFill(0);
     }
 
     function calculatepH(type, C_acid, C_base, V_init, pKaInput, step) {
@@ -298,8 +308,7 @@
         }
       });
       
-      // Ενημέρωση του ποτηριού (π.χ. το ύψος του γεμίσματος να αντανακλά την προσθήκη αντιδραστηρίου)
-      // Για παράδειγμα, ας πούμε ότι στο μέγιστο 100 mL αντιστοιχεί 100% γέμισμα.
+      // Ενημέρωση του ποτηριού ώστε το ύψος του γεμίσματος να αντανακλά την προσθήκη αντιδραστηρίου
       const latestVolume = data.volumes[data.volumes.length - 1];
       let fillPercent = Math.min((latestVolume / 100) * 100, 100);
       updateGlassFill(fillPercent);
@@ -310,7 +319,6 @@
       glassFill.style.height = percent + '%';
     }
 
-    // Αρχική εκτέλεση
     updateLabel();
     updateChart();
   </script>
