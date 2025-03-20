@@ -33,7 +33,7 @@
       align-items: center;
       margin-bottom: 10px;
     }
-    /* Η προχοΐδα με στροφιγγα στο πάνω μέρος του κυλίνδρου */
+    /* Η προχοΐδα με στροφιγγά στο πάνω μέρος του κυλίνδρου */
     .dropper-head {
       width: 40px;
       height: 40px;
@@ -88,7 +88,6 @@
         <!-- Ο ογκομετρικός κύλινδρος με προχοΐδα στο πάνω μέρος -->
         <div class="dropper-container">
           <div class="dropper-head"></div>
-          <!-- Εμφάνιση επιλογής διαλύματος για την προχοΐδα μέσα στον κύλινδρο -->
           <div class="solution-select">
             <label for="dropperSolution">Διάλυμα:</label>
             <select id="dropperSolution">
@@ -101,9 +100,9 @@
         
         <!-- Το ποτήρι για το ογκομετρόμενο διάλυμα -->
         <div class="glass-container">
+          <!-- Αρχικά το ποτήρι ξεκινάει κενό (0% γέμισμα) -->
           <div id="glassFill" class="glass-fill" style="height: 0%;"></div>
         </div>
-        <!-- Επιλογή διαλύματος για το ποτήρι -->
         <div class="solution-select">
           <label for="glassSolution">Διάλυμα:</label>
           <select id="glassSolution">
@@ -157,6 +156,7 @@
       label.textContent = (type === "strong_acid_weak_base") ? "pKb:" : "pKa:";
     }
 
+    // Η resetValues εξασφαλίζει πως το ποτήρι ξεκινάει κενό (0% γέμισμα)
     function resetValues() {
       document.getElementById('concAcid').value = 0.1;
       document.getElementById('concBase').value = 0.1;
@@ -306,7 +306,8 @@
         }
       });
       
-      // Ενημέρωση του ποτηριού ώστε το ύψος του γεμίσματος να αντανακλά την προσθήκη αντιδραστηρίου
+      // Ενημέρωση του ποτηριού ώστε το ύψος του γεμίσματος να αντανακλά την προσθήκη αντιδραστηρίου.
+      // Εδώ, αν δεν έχει προστεθεί ακόμα αντιδραστήριο, το ποτήρι παραμένει άδειο.
       const latestVolume = data.volumes[data.volumes.length - 1];
       let fillPercent = Math.min((latestVolume / 100) * 100, 100);
       updateGlassFill(fillPercent);
@@ -317,6 +318,7 @@
       glassFill.style.height = percent + '%';
     }
 
+    // Αρχική εκτέλεση: Το ποτήρι ξεκινάει κενό.
     updateLabel();
     updateChart();
   </script>
