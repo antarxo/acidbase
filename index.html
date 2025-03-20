@@ -28,7 +28,7 @@
       <select id="analysisType" onchange="updateChart()">
         <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
         <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-        <!-- Στην περίπτωση αυτή το αρχικό διάλυμα θεωρείται ως ασθενής βάση -->
+        <!-- Στην περίπτωση "strong_acid_weak_base" το αρχικό διάλυμα θεωρείται ως ασθενής βάση -->
         <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
         <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
       </select>
@@ -40,7 +40,7 @@
       <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
       <br>
       <label>Όγκος αρχικού διαλύματος (mL):</label>
-      <!-- Για την περίπτωση "strong_acid_weak_base" ο αρχικός όγκος αντιπροσωπεύει το διάλυμα της ασθενούς βάσης -->
+      <!-- Στην περίπτωση "strong_acid_weak_base" ο αρχικός όγκος αντιπροσωπεύει το διάλυμα της ασθενούς βάσης -->
       <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
       <br>
       <label>pKa:</label>
@@ -94,8 +94,7 @@
           }
         } else {
           totalVolume = V_init_L + (V_added / 1000);
-          // Σε όλες τις περιπτώσεις, εκτός από strong_acid_weak_base,
-          // θεωρούμε το αρχικό διάλυμα ως το οξύ.
+          // Για τις περιπτώσεις εκτός του "strong_acid_weak_base", θεωρούμε το αρχικό διάλυμα ως το οξύ.
           if (type !== "strong_acid_weak_base") {
             n_acid = C_acid * V_init_L;
             n_base = C_base * (V_added / 1000);
@@ -125,28 +124,32 @@
             }
           }
           else if (type === "strong_acid_weak_base") {
-            // Διόρθωση: αντιμετωπίζουμε την ογκομέτρηση ως προσθήκη ισχυρού οξέος σε διάλυμα ασθενούς βάσης.
-            // Αρχικά:
-            //   n_base = C_base * V_init_L   (ασθενής βάση)
-            //   n_acid = C_acid * (V_added/1000)  (προστιθέμενο ισχυρό οξύ)
+            // Διορθωμένη λογική: αντιμετωπίζουμε την ογκομέτρηση ως προσθήκη ισχυρού οξέος σε διάλυμα ασθενούς βάσης.
+            // Ο αρχικός όγκος (V_init) αντιστοιχεί στο διάλυμα της ασθενούς βάσης:
+            //    n_base = C_base * V_init_L
+            // και το προστιθέμενο ισχυρό οξύ:
+            //    n_acid = C_acid * (V_added/1000)
             totalVolume = V_init_L + (V_added / 1000);
             n_base = C_base * V_init_L;
             n_acid = C_acid * (V_added / 1000);
             if (V_added === 0) {
-              // Αρχικό pH του διαλύματος ασθενούς βάσης:
+              // Αρχικό pH του διαλύματος ασθενούς βάσης.
+              // Η προσέγγιση εδώ χρησιμοποιεί την εξίσωση για τη υδρόλυση του BH+:
+              // pH ≈ 14 - 0.5*(pKb - log10(C_base)), όπου pKb = 14 - pKa.
               let pKb = 14 - pKa;
               currentpH = 14 - 0.5 * (pKb - Math.log10(C_base));
             } else if (n_acid < n_base - epsilon) {
-              // Περιοχή buffer:
-              // Εφαρμόζουμε την εξίσωση Henderson για το σύστημα ασθενούς βάσης/συζευγμένου οξέος:
+              // Περιοχή buffer: χρησιμοποιούμε την εξίσωση Henderson-Hasselbalch για το σύστημα:
               // pH = 14 - [ pKb + log10(n_acid/(n_base - n_acid)) ]
               let pKb = 14 - pKa;
               currentpH = 14 - (pKb + Math.log10(n_acid / (n_base - n_acid)));
             } else if (Math.abs(n_acid - n_base) < epsilon) {
               // Σημείο ισοδυναμίας:
-              // Ο υπολογισμός του pH σε αυτό το σημείο μπορεί να βασιστεί στην υδρόλυση του συζευγμένου οξέος.
-              // Εδώ χρησιμοποιούμε μια προσέγγιση:
-              currentpH = 0.5 * (pKa + 14 + Math.log10(n_base / totalVolume));
+              // Σε αυτό το σημείο, όλο το αρχικό B έχει μετατραπεί στο BH+.
+              // Η συγκέντρωση του BH+ είναι: C = n_base/totalVolume.
+              // Λύνοντας την εξίσωση του υδρολυτικού ισοζυγίου για BH+:
+              // pH ≈ ½*(pKa - log10(C))
+              currentpH = 0.5 * (pKa - Math.log10(n_base / totalVolume));
             } else {
               // Περιοχή υπερχείλισης οξέος:
               currentpH = -Math.log10((n_acid - n_base) / totalVolume);
@@ -174,17 +177,16 @@
         document.getElementById('pKa').disabled = true;
       }
       
-      // Υπολογισμός σημείου ισοδυναμίας ανάλογα με τον τύπο ανάλυσης
+      // Υπολογισμός σημείου ισοδυναμίας (equivalence point)
       let eqVol;
       if (type === "strong_acid_weak_base") {
-        // Για ισχυρό οξύ + ασθενή βάση:
-        // V_eq = (n_base_initial) / C_acid = (C_base * V_init) / C_acid
+        // Στην περίπτωση αυτή το σημείο ισοδυναμίας επιτυγχάνεται όταν:
+        //   n_base = C_base * V_init_L  =  n_acid = C_acid * V_added  =>  V_added = (C_base * V_init) / C_acid
         eqVol = (C_base * V_init) / C_acid;
       } else if (type === "strong_acid_strong_base") {
-        // Για ισχυρό οξύ + ισχυρή βάση, ισοδυναμία όταν: C_acid*V_init = C_base*V_added
         eqVol = (C_acid * V_init) / C_base;
       } else {
-        // Οι υπόλοιπες περιπτώσεις μπορούν να χρησιμοποιούν τον ίδιο υπολογισμό όπως πριν
+        // Για τις άλλες περιπτώσεις διατηρούμε τον ίδιο υπολογισμό
         eqVol = (C_acid * V_init) / C_base;
       }
       
