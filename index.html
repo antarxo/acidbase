@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Ζωντανή Προσομοίωση Ογκομέτρησης - Ενσωματωμένα Γραφικά</title>
+  <title>Ζωντανή Προσομοίωση Ογκομέτρησης - Διάταξη Dropper πάνω από το Ποτήρι</title>
   <!-- Chart.js και το annotation plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -13,14 +13,40 @@
     .param-box { background: #f0f0f0; padding: 15px; border-radius: 8px; }
     input, select { width: 100px; }
     label { display: inline-block; width: 140px; }
-    /* Ενσωματωμένα γραφικά στοιχεία μικρού μεγέθους μέσα στο παράθυρο παραμέτρων */
+    /* Ομαδοποίηση των γραφικών στοιχείων σε μία κατακόρυφη διάταξη */
     .graphics-container {
       display: flex;
-      justify-content: space-around;
+      flex-direction: column;
+      align-items: center;
       margin-bottom: 20px;
     }
-    .graphic-element {
-      text-align: center;
+    /* Στυλ για την προχοΐδα ως ογκομετρικό κύλινδρο */
+    .dropper-container {
+      position: relative;
+      width: 80px;
+      height: 200px;
+      background: #ddd;
+      border: 2px solid #333;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    /* Η προχοΐδα με στροφιγγα στο πάνω μέρος του κυλίνδρου */
+    .dropper-head {
+      width: 40px;
+      height: 40px;
+      background: #eee;
+      border: 2px solid #333;
+      border-radius: 50%;
+      position: absolute;
+      top: -25px;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
     /* Μικρότερο ποτήρι */
     .glass-container {
@@ -31,7 +57,6 @@
       border-radius: 0 0 8px 8px;
       overflow: hidden;
       background: #fff;
-      margin: 0 auto;
     }
     .glass-fill {
       position: absolute;
@@ -40,37 +65,10 @@
       background: rgba(30, 136, 229, 0.6);
       transition: height 0.5s ease;
     }
-    /* Μικρότερη προχοΐδα */
-    .dropper-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .dropper {
-      width: 30px;
-      height: 90px;
-      background: #ccc;
-      border: 2px solid #333;
-      border-radius: 15px;
-      position: relative;
-      margin-bottom: 5px;
-    }
-    .dropper::after {
-      content: "";
-      position: absolute;
-      top: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 20px;
-      height: 20px;
-      border: 2px solid #333;
-      border-radius: 50%;
-      background: #eee;
-      animation: spin 2s linear infinite;
-    }
-    @keyframes spin {
-      from { transform: translateX(-50%) rotate(0deg); }
-      to { transform: translateX(-50%) rotate(360deg); }
+    /* Επιλογή διαλύματος για το ενιαίο στοιχείο */
+    .solution-select {
+      margin-top: 5px;
+      text-align: center;
     }
   </style>
 </head>
@@ -82,37 +80,37 @@
       <canvas id="titrationChart"></canvas>
     </div>
     
-    <!-- Παράθυρο Παραμέτρων με ενσωματωμένα γραφικά στοιχεία -->
+    <!-- Παράθυρο παραμέτρων με ενσωματωμένα γραφικά στοιχεία (Dropper πάνω από το ποτήρι) -->
     <div class="param-box">
       <h3>Παράμετροι & Γραφικά Στοιχεία</h3>
+      
       <div class="graphics-container">
-        <!-- Γραφικό ποτήρι -->
-        <div class="graphic-element">
-          <div class="glass-container">
-            <div id="glassFill" class="glass-fill" style="height: 0%;"></div>
-          </div>
-          <div>
-            <label for="glassSolution">Διάλυμα:</label>
-            <select id="glassSolution">
-              <option value="διάλυμα 1">1</option>
-              <option value="διάλυμα 2">2</option>
-              <option value="διάλυμα 3">3</option>
+        <!-- Ο ογκομετρικός κύλινδρος με προχοΐδα στο πάνω μέρος -->
+        <div class="dropper-container">
+          <div class="dropper-head"></div>
+          <!-- Εμφάνιση επιλογής διαλύματος για την προχοΐδα μέσα στον κύλινδρο -->
+          <div class="solution-select">
+            <label for="dropperSolution">Διάλυμα:</label>
+            <select id="dropperSolution">
+              <option value="διάλυμα Α">Α</option>
+              <option value="διάλυμα Β">Β</option>
+              <option value="διάλυμα Γ">Γ</option>
             </select>
           </div>
         </div>
-        <!-- Γραφικό προχοΐδας -->
-        <div class="graphic-element">
-          <div class="dropper-container">
-            <div class="dropper"></div>
-            <div>
-              <label for="dropperSolution">Διάλυμα:</label>
-              <select id="dropperSolution">
-                <option value="διάλυμα Α">Α</option>
-                <option value="διάλυμα Β">Β</option>
-                <option value="διάλυμα Γ">Γ</option>
-              </select>
-            </div>
-          </div>
+        
+        <!-- Το ποτήρι για το ογκομετρόμενο διάλυμα -->
+        <div class="glass-container">
+          <div id="glassFill" class="glass-fill" style="height: 0%;"></div>
+        </div>
+        <!-- Επιλογή διαλύματος για το ποτήρι -->
+        <div class="solution-select">
+          <label for="glassSolution">Διάλυμα:</label>
+          <select id="glassSolution">
+            <option value="διάλυμα 1">1</option>
+            <option value="διάλυμα 2">2</option>
+            <option value="διάλυμα 3">3</option>
+          </select>
         </div>
       </div>
       
