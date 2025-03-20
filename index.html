@@ -2,44 +2,47 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση με pipet3 & breaker3</title>
-  <!-- Φόρτωση του p5.js -->
+  <title>Προσομοίωση με pipet3 & breaker3 (Scaled & Shifted)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
   <script>
-    // Μεταβλητές εικόνων
     let pipetteImg, breakerImg;
     
-    // Μεταβλητές για animation και γεμάτο
-    let beakerFill = 0; // ποσοστό γεμίσματος (0-100)
-    let dropY;          // τρέχουσα θέση της σταγόνας
+    // Animation και γεμάτο
+    let beakerFill = 0;
+    let dropY;
     let dropActive = false;
     let dropSpeed = 5;
     
-    // Θέσεις εικόνων – θα υπολογιστούν δυναμικά με βάση τις φυσικές τους διαστάσεις
+    // Scale για τις εικόνες: 60%
+    let scaleFactorImages = 0.6;
+    
+    // Μεταβλητές για τις κλιμακωμένες διαστάσεις
+    let pipetScaledW, pipetScaledH;
+    let breakerScaledW, breakerScaledH;
+    
+    // Θέσεις και margins
     let marginRight = 20;
     let marginTop = 20;
-    
-    // Θέσεις pipet3 και breaker3 (θα χρησιμοποιήσουμε imageMode(CORNER))
+    // Μεταβλητές θέσεων (θα χρησιμοποιήσουμε imageMode(CORNER))
     let pipetX, pipetY;         // pipet3 θέση (αριστερή-πάνω γωνία)
     let breakerX, breakerY;     // breaker3 θέση (αριστερή-πάνω γωνία)
     
-    // Ορισμός αρχικής θέσης της σταγόνας: να ξεκινάει από το κάτω άκρο του pipet3
+    // Ορισμός αρχικής θέσης της σταγόνας: από το κάτω άκρο του pipet3
     let initialDropY;
     
     // Παράμετροι για το σχεδιασμό του υγρού μέσα στο breaker3
-    // Οι φυσικές διαστάσεις της "έλλειψης" καθορίζουν το πλάτος του υγρού
-    let scaleFactor = 10; // παράγοντας κλίμακας για την έλλειψη
-    let liquidEllipseWidth = 6.36 * scaleFactor;   // πλάτος έλλειψης
-    let liquidEllipseHeight = 1.93 * scaleFactor;    // ύψος έλλειψης
-    // Ορισμός ορίων μέσα στο breaker3 για το υγρό (offset από το πάνω και κάτω άκρο του εσωτερικού)
+    let liquidScaleFactor = 10; 
+    let liquidEllipseWidth = 6.36 * liquidScaleFactor; 
+    let liquidEllipseHeight = 1.93 * liquidScaleFactor; 
     let liquidContainerTopOffset = 30;
     let liquidContainerBottomOffset = 20;
-    // Θα υπολογιστούν στο draw με βάση το breakerImg
+    
+    // Offset για να μετακινηθούν η σταγόνα και το περιεχόμενο προς τα αριστερά
+    let shiftOffset = 20;
     
     function preload() {
-      // Φόρτωση των νέων εικόνων
       pipetteImg = loadImage('pipet3.png', 
         () => { console.log("pipet3.png loaded successfully"); },
         () => { console.error("Error loading pipet3.png"); }
@@ -53,23 +56,24 @@
     function setup() {
       createCanvas(600, 800);
       
-      // Αφού έχουν φορτωθεί οι εικόνες, υπολογίζουμε τις θέσεις ώστε:
-      // 1. Οι δεξιές άκρες τους να στοιχίζονται (δηλαδή x + width = canvas.width - marginRight)
-      // 2. Το κάτω άκρο του pipet3 να συμπίπτει με το πάνω άκρο του breaker3
+      // Υπολογισμός των κλιμακωμένων διαστάσεων
+      pipetScaledW = pipetteImg.width * scaleFactorImages;
+      pipetScaledH = pipetteImg.height * scaleFactorImages;
+      breakerScaledW = breakerImg.width * scaleFactorImages;
+      breakerScaledH = breakerImg.height * scaleFactorImages;
       
-      // pipet3: θέση με βάση το marginTop και δεξιά στοίχιση
-      pipetX = width - marginRight - pipetteImg.width;
+      // Το pipet3 τοποθετείται στην επάνω δεξιά γωνία με marginRight και marginTop
+      pipetX = width - marginRight - pipetScaledW;
       pipetY = marginTop;
       
       // Το κάτω άκρο του pipet3:
-      let pipetBottom = pipetY + pipetteImg.height;
-      initialDropY = pipetBottom;  // η σταγόνα ξεκινάει από εδώ
+      let pipetBottom = pipetY + pipetScaledH;
+      initialDropY = pipetBottom;
       
-      // breaker3: τοποθετούμε το πάνω του άκρο να είναι ίσο με pipetBottom
-      breakerX = width - marginRight - breakerImg.width;
-      breakerY = pipetBottom; // το πάνω άκρο του breaker3
+      // Το breaker3 τοποθετούμε ώστε το πάνω του άκρο να συμπίπτει με το pipet3 (δηλαδή pipetBottom)
+      breakerX = width - marginRight - breakerScaledW;
+      breakerY = pipetBottom;
       
-      // Αρχικοποίηση της θέσης της σταγόνας
       dropY = initialDropY;
       
       // Δημιουργία κουμπιών
@@ -85,54 +89,46 @@
     function draw() {
       background(240);
       
-      // 1. Σχεδίαση του breaker3 (ποτήρι) με φυσικές διαστάσεις
+      // 1. Σχεδίαση του breaker3 (ποτήρι) σε φυσικές, κλιμακωμένες διαστάσεις
       imageMode(CORNER);
       if(breakerImg) {
-        image(breakerImg, breakerX, breakerY);
+        image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       } else {
         fill(255);
-        rect(breakerX, breakerY, 150, 250);
+        rect(breakerX, breakerY, 150 * scaleFactorImages, 250 * scaleFactorImages);
       }
       
       // 2. Σχεδίαση του υγρού μέσα στο breaker3
-      // Υπολογισμός ορίων του εσωτερικού του breaker
       let containerTop = breakerY + liquidContainerTopOffset;
-      let containerBottom = breakerY + breakerImg.height - liquidContainerBottomOffset;
+      let containerBottom = breakerY + breakerScaledH - liquidContainerBottomOffset;
       let maxLiquidHeight = containerBottom - containerTop;
       let liquidHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
-      // Η πάνω έλλειψη (μετακινούμενη) τοποθετείται στο σημείο όπου τελειώνει το γεμάτο
       let topLiquidY = containerBottom - liquidHeight;
-      // Για οριζόντια στοίχιση, τοποθετούμε το υγρό ώστε η δεξιά πλευρά του να ευθυγραμμίζεται με τη δεξιά πλευρά του breaker3
-      let liquidX = breakerX + breakerImg.width - liquidEllipseWidth;
+      // Το περιεχόμενο μετατοπίζεται αριστερότερα κατά shiftOffset
+      let liquidX = breakerX + breakerScaledW - liquidEllipseWidth - shiftOffset;
       
       noStroke();
-      fill(30, 136, 229); // solid χρώμα
-      
-      // Το ορθογώνιο του υγρού: από την πάνω έλλειψη έως την κάτω έλλειψη
+      fill(30, 136, 229);
       rectMode(CORNER);
       rect(liquidX, topLiquidY, liquidEllipseWidth, liquidHeight);
       
-      // Σχεδίαση της πάνω (μετακινούμενης) έλλειψης
       ellipseMode(CENTER);
       ellipse(liquidX + liquidEllipseWidth/2, topLiquidY, liquidEllipseWidth, liquidEllipseHeight);
-      
-      // Σχεδίαση της σταθερής, κάτω έλλειψης
       ellipse(liquidX + liquidEllipseWidth/2, containerBottom, liquidEllipseWidth, liquidEllipseHeight);
       
-      // 3. Σχεδίαση του pipet3 (με φυσικές διαστάσεις)
+      // 3. Σχεδίαση του pipet3 (κλιμακωμένη)
       imageMode(CORNER);
       if(pipetteImg) {
-        image(pipetteImg, pipetX, pipetY);
+        image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       } else {
         fill(200);
-        rect(pipetX, pipetY, 80, 150);
+        rect(pipetX, pipetY, 80 * scaleFactorImages, 150 * scaleFactorImages);
       }
       
-      // 4. Σχεδίαση και κίνηση της σταγόνας που έρχεται από το pipet3
+      // 4. Σχεδίαση και κίνηση της σταγόνας (μετατοπισμένη αριστερότερα)
       if(dropActive) {
         drawDrop();
         dropY += dropSpeed;
-        // Όριο απορρόφησης της σταγόνας: όταν φτάσει στο κάτω άκρο του breaker3 (containerBottom)
         if(dropY > containerBottom - liquidEllipseHeight/2) {
           dropActive = false;
           dropY = initialDropY;
@@ -141,24 +137,22 @@
       }
     }
     
-    // Σχεδίαση της σταγόνας: να ξεκινάει από το κάτω άκρο του pipet3 (δεξιά πλευρά)
+    // Σχεδίαση της σταγόνας: μετατοπισμένη αριστερότερα
     function drawDrop() {
       push();
       fill(30, 136, 229);
       noStroke();
-      // Η σταγόνα βγαίνει από το κάτω άκρο του pipet3, δηλαδή (pipetX + pipetteImg.width, dropY)
-      ellipse(pipetX + pipetteImg.width, dropY, 10, 15);
+      // Η σταγόνα τώρα ξεκινά από pipetX + pipetScaledW - shiftOffset
+      ellipse(pipetX + pipetScaledW - shiftOffset, dropY, 10, 15);
       pop();
     }
     
-    // Ξεκινά η κίνηση της σταγόνας
     function startDrop() {
       if (!dropActive) {
         dropActive = true;
       }
     }
     
-    // Επαναφορά του γεμίσματος και της θέσης της σταγόνας
     function resetFill() {
       beakerFill = 0;
       dropY = initialDropY;
