@@ -2,21 +2,104 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Πραγματική Καμπύλη Ογκομέτρησης</title>
-  <!-- Chart.js και το annotation plugin (έκδοση συμβατή) -->
+  <title>Ζωντανή Προσομοίωση Ογκομέτρησης</title>
+  <!-- Chart.js και το annotation plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .chart-container { width: 800px; height: 500px; }
-    .param-box { background: #f0f0f0; padding: 15px; border-radius: 8px; }
-    input { width: 100px; }
-    label[for="pKa"] { display: inline-block; width: 140px; }
+    .param-box, .interactive-box { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    input, select { width: 100px; }
+    label { display: inline-block; width: 140px; }
+    /* Στυλ για το ποτήρι */
+    .glass-container {
+      position: relative;
+      width: 150px;
+      height: 300px;
+      border: 2px solid #333;
+      border-radius: 0 0 10px 10px;
+      overflow: hidden;
+      background: #fff;
+      margin: 0 auto;
+    }
+    .glass-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(30, 136, 229, 0.6);
+      transition: height 0.5s ease;
+    }
+    /* Στυλ για την προχοΐδα */
+    .dropper-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .dropper {
+      width: 50px;
+      height: 150px;
+      background: #ccc;
+      border: 2px solid #333;
+      border-radius: 20px;
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .dropper::after {
+      content: "";
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 30px;
+      border: 2px solid #333;
+      border-radius: 50%;
+      background: #eee;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+    .solution-select { margin-top: 5px; }
   </style>
 </head>
 <body>
-  <h1>Πραγματική Προσομοίωση Καμπύλης Ογκομέτρησης</h1>
+  <h1>Ζωντανή Προσομοίωση Ογκομέτρησης</h1>
+  
+  <!-- Πεδίο επιλογής διαλύματος για το ποτήρι -->
+  <div class="interactive-box">
+    <h3>Ποτήρι - Ογκομετρόμενο Διάλυμα</h3>
+    <div class="glass-container">
+      <div id="glassFill" class="glass-fill" style="height: 0%;"></div>
+    </div>
+    <div class="solution-select">
+      <label for="glassSolution">Επιλογή Διαλύματος:</label>
+      <select id="glassSolution">
+        <option value="διάλυμα 1">Διάλυμα 1</option>
+        <option value="διάλυμα 2">Διάλυμα 2</option>
+        <option value="διάλυμα 3">Διάλυμα 3</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Πεδίο επιλογής διαλύματος για την προχοΐδα -->
+  <div class="interactive-box">
+    <h3>Προχοΐδα - Διάλυμα που Προστίθεται</h3>
+    <div class="dropper-container">
+      <div class="dropper"></div>
+      <div class="solution-select">
+        <label for="dropperSolution">Επιλογή Διαλύματος:</label>
+        <select id="dropperSolution">
+          <option value="διάλυμα Α">Διάλυμα Α</option>
+          <option value="διάλυμα Β">Διάλυμα Β</option>
+          <option value="διάλυμα Γ">Διάλυμα Γ</option>
+        </select>
+      </div>
+    </div>
+  </div>
   
   <div class="container">
     <div class="chart-container">
@@ -29,7 +112,6 @@
       <select id="analysisType" onchange="updateChart(); updateLabel();">
         <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
         <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-        <!-- Στην περίπτωση "strong_acid_weak_base" το αρχικό διάλυμα είναι ασθενής βάση -->
         <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
         <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
       </select>
@@ -41,10 +123,8 @@
       <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
       <br>
       <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
-      <!-- Στην περίπτωση "strong_acid_weak_base" ο αρχικός όγκος αντιπροσωπεύει το διάλυμα της ασθενούς βάσης -->
       <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
       <br>
-      <!-- Το ίδιο πεδίο, αλλά ανάλογη ετικέτα: όταν ο τύπος είναι strong_acid_weak_base εμφανίζεται ως pKb -->
       <label for="pKa" id="pKaLabel">pKa:</label>
       <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
       <br><br>
@@ -64,14 +144,9 @@
     }
 
     function updateLabel() {
-      // Αν ο τύπος ανάλυσης είναι strong_acid_weak_base, τότε η ετικέτα δείχνει pKb, αλλιώς pKa.
       const type = document.getElementById('analysisType').value;
       const label = document.getElementById('pKaLabel');
-      if (type === "strong_acid_weak_base") {
-        label.textContent = "pKb:";
-      } else {
-        label.textContent = "pKa:";
-      }
+      label.textContent = (type === "strong_acid_weak_base") ? "pKb:" : "pKa:";
     }
 
     function resetValues() {
@@ -82,6 +157,7 @@
       document.getElementById('stepSize').value = 1;
       updateChart();
       updateLabel();
+      updateGlassFill(0); // Επαναφορά του ποτηριού
     }
 
     function calculatepH(type, C_acid, C_base, V_init, pKaInput, step) {
@@ -108,7 +184,6 @@
           }
         } else {
           totalVolume = V_init_L + (V_added / 1000);
-          // Για όλες τις περιπτώσεις εκτός του "strong_acid_weak_base", το αρχικό διάλυμα θεωρείται ως οξύ.
           if (type !== "strong_acid_weak_base") {
             n_acid = C_acid * V_init_L;
             n_base = C_base * (V_added / 1000);
@@ -138,29 +213,17 @@
             }
           }
           else if (type === "strong_acid_weak_base") {
-            // Διορθωμένη λογική: Αντιμετωπίζουμε την ογκομέτρηση ως προσθήκη ισχυρού οξέος σε διάλυμα ασθενούς βάσης.
-            // Αρχικά, το διάλυμα της ασθενούς βάσης:
             n_base = C_base * V_init_L;
-            // Το προστιθέμενο ισχυρό οξύ:
             n_acid = C_acid * (V_added / 1000);
             totalVolume = V_init_L + (V_added / 1000);
-            // Εδώ, το πεδίο εισόδου αντιπροσωπεύει το pKb (παρέχεται άμεσα από τον χρήστη).
-            const pKb = pKaInput; // Χρησιμοποιούμε απευθείας το pKb που δόθηκε.
+            const pKb = pKaInput;
             if (V_added === 0) {
-              // Αρχικό pH του διαλύματος ασθενούς βάσης, υπολογίζεται με βάση την υδρόλυση του συζευγμένου ιόντος:
-              // pH ≈ 14 - 0.5*(pKb - log10(C_base))
               currentpH = 14 - 0.5 * (pKb - Math.log10(C_base));
             } else if (n_acid < n_base - epsilon) {
-              // Περιοχή buffer: χρησιμοποιούμε την εξίσωση Henderson-Hasselbalch για σύστημα weak base/συζευγμένου οξέος:
-              // pH = 14 - [ pKb + log10(n_acid/(n_base - n_acid)) ]
               currentpH = 14 - (pKb + Math.log10(n_acid / (n_base - n_acid)));
             } else if (Math.abs(n_acid - n_base) < epsilon) {
-              // Σημείο ισοδυναμίας:
-              // Εδώ, η συγκέντρωση του συζευγμένου ιόντος είναι: C = n_base/totalVolume και
-              // pH ≈ 0.5 * ((14 - pKb) - log10(C))
               currentpH = 0.5 * ((14 - pKb) - Math.log10(n_base / totalVolume));
             } else {
-              // Περιοχή υπερχείλισης οξέος:
               currentpH = -Math.log10((n_acid - n_base) / totalVolume);
             }
           }
@@ -176,24 +239,17 @@
       const C_acid = parseFloat(document.getElementById('concAcid').value);
       const C_base = parseFloat(document.getElementById('concBase').value);
       const V_init = parseFloat(document.getElementById('volumeAcid').value);
-      // Το πεδίο pKa χρησιμοποιείται ως pKa για τις περισσότερες περιπτώσεις,
-      // αλλά για "strong_acid_weak_base" αντιπροσωπεύει το pKb.
       const pKaInput = parseFloat(document.getElementById('pKa').value);
       const step = parseFloat(document.getElementById('stepSize').value);
 
-      // Ενεργοποίηση/απενεργοποίηση του πεδίου pKa ανάλογα με τον τύπο ανάλυσης
       if (type === "weak_acid_strong_base" || type === "strong_acid_weak_base") {
         document.getElementById('pKa').disabled = false;
       } else {
         document.getElementById('pKa').disabled = true;
       }
       
-      // Υπολογισμός σημείου ισοδυναμίας (equivalence point)
       let eqVol;
       if (type === "strong_acid_weak_base") {
-        // Για την περίπτωση strong_acid_weak_base:
-        // Το σημείο ισοδυναμίας επιτυγχάνεται όταν n_base (ασθενής βάση) = n_acid (προστιθέμενο ισχυρό οξύ),
-        // δηλαδή: V_eq = (C_base * V_init) / C_acid.
         eqVol = (C_base * V_init) / C_acid;
       } else if (type === "strong_acid_strong_base") {
         eqVol = (C_acid * V_init) / C_base;
@@ -241,6 +297,17 @@
           }
         }
       });
+      
+      // Ενημέρωση του ποτηριού (π.χ. το ύψος του γεμίσματος να αντανακλά την προσθήκη αντιδραστηρίου)
+      // Για παράδειγμα, ας πούμε ότι στο μέγιστο 100 mL αντιστοιχεί 100% γέμισμα.
+      const latestVolume = data.volumes[data.volumes.length - 1];
+      let fillPercent = Math.min((latestVolume / 100) * 100, 100);
+      updateGlassFill(fillPercent);
+    }
+
+    function updateGlassFill(percent) {
+      const glassFill = document.getElementById('glassFill');
+      glassFill.style.height = percent + '%';
     }
 
     // Αρχική εκτέλεση
