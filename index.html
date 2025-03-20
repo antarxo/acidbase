@@ -5,7 +5,7 @@
     <title>Πραγματική Καμπύλη Ογκομέτρησης</title>
     <!-- Χρησιμοποιούμε Chart.js 4.4.1 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <!-- Χρησιμοποιούμε το Chart Annotation plugin σε έκδοση συμβατή με Chart.js 4 (v2.1.0) -->
+    <!-- Χρησιμοποιούμε το Chart Annotation plugin σε έκδοση συμβατή (v2.1.0) -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
@@ -43,7 +43,7 @@
 
             <br><br>
             <label>pKa (για ασθενή βάση):</label>
-            <!-- Για ισχυρό οξύ + ασθενή βάση, θεωρούμε ότι το pKa αφορά το συζυγές οξύ της βάσης (π.χ. για NH₄⁺ ~9.25) -->
+            <!-- Σημείωση: Για την περίπτωση "Ισχυρό οξύ + Ασθενή βάση" θεωρούμε το pKa του συζυγού ιόντος της ασθενούς βάσης -->
             <input type="number" id="pKa" value="9.25" step="0.1" onchange="updateChart()" disabled>
 
             <button onclick="resetValues()">Επαναφορά</button>
@@ -54,7 +54,7 @@
         let chart;
         const ctx = document.getElementById('titrationChart').getContext('2d');
 
-        // Έλεγχος αν το plugin έχει καταχωρηθεί αυτόματα
+        // Έλεγχος καταχώρησης του annotation plugin
         if (!Chart.registry.plugins.get('annotation')) {
             console.error("Το Chart Annotation plugin δεν φορτώθηκε σωστά.");
         }
@@ -68,77 +68,80 @@
             updateChart();
         }
 
-        // Συνάρτηση υπολογισμού pH για τους διαφορετικούς τύπους
+        // Συνάρτηση υπολογισμού pH
         function calculatepH(type, C_acid, C_base, V_acid, pKa) {
             let volumes = [];
             let pH = [];
             const Kw = 1e-14;
             const V_acid_L = V_acid / 1000;
 
+            // Διατρέχουμε τιμές όγκου βάσης από 0 έως 100 mL
             for (let V_base = 0; V_base <= 100; V_base += 1) {
                 const V_base_L = V_base / 1000;
+                let totalVolume = V_acid_L + V_base_L;
                 let n_acid = C_acid * V_acid_L;
                 let n_base = C_base * V_base_L;
-                let totalVolume = V_acid_L + V_base_L;
+                let currentpH = 0;
 
                 if (type === "strong_acid_strong_base") {
+                    // Ισχυρό οξύ + ισχυρή βάση
                     let excess = n_acid - n_base;
                     if (excess > 0) {
-                        pH.push(-Math.log10(excess / totalVolume));
+                        currentpH = -Math.log10(excess / totalVolume);
                     } else if (excess < 0) {
-                        pH.push(14 + Math.log10(-excess / totalVolume));
+                        currentpH = 14 + Math.log10(-excess / totalVolume);
                     } else {
-                        pH.push(7);
+                        currentpH = 7;
                     }
-                }
+                } 
                 else if (type === "weak_acid_strong_base") {
-                    // Χρησιμοποιούμε το κλασικό Henderson-Hasselbalch πριν την ισοδυναμία
+                    // Ασθενές οξύ + ισχυρή βάση (τυπική περίπτωση ρυθμιστικού)
                     let n_HA = n_acid - n_base;
                     let n_A = n_base;
                     if (n_base < n_acid) {
-                        pH.push( parseFloat(document.getElementById('pKa').value) + Math.log10(n_A / Math.max(n_HA, 1e-10)) );
-                    } else if (Math.abs(n_base - n_acid) < 1e-10) {
+                        currentpH = pKa + Math.log10(n_A / Math.max(n_HA, 1e-10));
+                    } else if (n_base === n_acid) {
                         let conc_A = n_A / totalVolume;
-                        pH.push(14 + 0.5 * (Math.log10(Kw) + Math.log10(conc_A)));
+                        currentpH = 14 + 0.5 * (Math.log10(Kw) + Math.log10(conc_A));
                     } else {
                         let excess_OH = (n_base - n_acid) / totalVolume;
-                        pH.push(14 + Math.log10(excess_OH));
+                        currentpH = 14 + Math.log10(excess_OH);
                     }
-                }
+                } 
                 else if (type === "strong_acid_weak_base") {
-                    // Για ισχυρό οξύ + ασθενή βάση:
-                    // - Πριν την ισοδυναμία: πλεόνασμα οξέος, pH = -log([H+])
-                    // - Στην ισοδυναμία: μόνο το συζυγές οξύ (BH+) είναι παρόν, pH = 1/2*(pKa - log([BH+]))
-                    // - Μετά την ισοδυναμία: πλεόνασμα ασθενούς βάσης, pH = 14 - (pKb + log([Β])), όπου pKb = 14 - pKa (υποθέτουμε ότι το pKa που δίνεται αφορά το συζυγές οξύ)
+                    // Ισχυρό οξύ + ασθενή βάση
                     if (n_acid > n_base) {
+                        // Περίπτωση πλεονάζοντος ισχυρού οξέος
                         let excess = n_acid - n_base;
-                        pH.push(-Math.log10(excess / totalVolume));
-                    } else if (Math.abs(n_acid - n_base) < 1e-10) {
-                        // Στην ισοδυναμία: το BH+ έχει συγκέντρωση n_base/totalVolume
-                        let C_BH = n_base / totalVolume;
-                        pH.push(0.5 * (parseFloat(document.getElementById('pKa').value) - Math.log10(C_BH)));
-                    } else { // n_base > n_acid => πλεόνασμα ασθενούς βάσης
-                        let excess = n_base - n_acid;
-                        let C_B = excess / totalVolume;
-                        let pKb = 14 - parseFloat(document.getElementById('pKa').value);
-                        pH.push(14 - (pKb + Math.log10(C_B)));
+                        currentpH = -Math.log10(excess / totalVolume);
+                    } else if (n_acid === n_base) {
+                        // Σημείο Ισοδυναμίας: Ολικό διάλυμα περιέχει μόνο το συζυγές ιόν (BH+)
+                        let conc_BH = n_acid / totalVolume;
+                        // Υδρόλυση του BH+: pH = ½*(pKa - log10(conc_BH))
+                        currentpH = 0.5 * (pKa - Math.log10(conc_BH));
+                    } else {
+                        // Buffer περιοχή: μείγμα BH+ και μη αντιδράσας ασθενούς βάσης (B)
+                        // [B] = (n_base - n_acid) / totalVolume, [BH+] = n_acid / totalVolume
+                        // pH = pKa + log10([B]/[BH+]) = pKa + log10((n_base - n_acid)/n_acid)
+                        currentpH = pKa + Math.log10((n_base - n_acid) / n_acid);
                     }
                 }
+                
                 volumes.push(V_base);
+                pH.push(currentpH);
             }
             return { volumes, pH };
         }
 
-        // Ενημέρωση γραφήματος
+        // Συνάρτηση ενημέρωσης του γραφήματος
         function updateChart() {
             const type = document.getElementById('analysisType').value;
             const C_acid = parseFloat(document.getElementById('concAcid').value);
             const C_base = parseFloat(document.getElementById('concBase').value);
             const V_acid = parseFloat(document.getElementById('volumeAcid').value);
             const pKa = parseFloat(document.getElementById('pKa').value);
-
-            // Ενεργοποίηση/απενεργοποίηση του πεδίου pKa ανάλογα με τον τύπο ανάλυσης
-            document.getElementById('pKa').disabled = (type !== "weak_acid_strong_base" && type !== "strong_acid_weak_base");
+            // Ενεργοποίηση του πεδίου pKa μόνο για το weak acid + strong base (ή παραμετροποίηση)
+            document.getElementById('pKa').disabled = (type !== "strong_acid_weak_base");
 
             const data = calculatepH(type, C_acid, C_base, V_acid, pKa);
             
