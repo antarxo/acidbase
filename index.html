@@ -12,6 +12,7 @@
     .chart-container { width: 800px; height: 500px; }
     .param-box { background: #f0f0f0; padding: 15px; border-radius: 8px; }
     input { width: 100px; }
+    label[for="pKa"] { display: inline-block; width: 140px; }
   </style>
 </head>
 <body>
@@ -24,30 +25,30 @@
 
     <div class="param-box">
       <h3>Παράμετροι</h3>
-      <label>Τύπος Ανάλυσης:</label>
-      <select id="analysisType" onchange="updateChart()">
+      <label for="analysisType">Τύπος Ανάλυσης:</label>
+      <select id="analysisType" onchange="updateChart(); updateLabel();">
         <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
         <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-        <!-- Στην περίπτωση "strong_acid_weak_base" το αρχικό διάλυμα θεωρείται ως ασθενής βάση -->
+        <!-- Στην περίπτωση "strong_acid_weak_base" το αρχικό διάλυμα είναι ασθενής βάση -->
         <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
         <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
       </select>
       <br><br>
-      <label>Συγκέντρωση Οξέος (M):</label>
+      <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
       <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
       <br>
-      <label>Συγκέντρωση Βάσης (M):</label>
+      <label for="concBase">Συγκέντρωση Βάσης (M):</label>
       <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
       <br>
-      <label>Όγκος αρχικού διαλύματος (mL):</label>
+      <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
       <!-- Στην περίπτωση "strong_acid_weak_base" ο αρχικός όγκος αντιπροσωπεύει το διάλυμα της ασθενούς βάσης -->
       <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
       <br>
-      <label>pKa:</label>
-      <!-- Το pKa χρησιμοποιείται στις περιπτώσεις ασθενής οξύ/βάσης -->
+      <!-- Το ίδιο πεδίο, αλλά ανάλογη ετικέτα: όταν ο τύπος είναι strong_acid_weak_base εμφανίζεται ως pKb -->
+      <label for="pKa" id="pKaLabel">pKa:</label>
       <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
       <br><br>
-      <label>Βήμα προσθήκης (mL):</label>
+      <label for="stepSize">Βήμα προσθήκης (mL):</label>
       <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
       <br><br>
       <button onclick="resetValues()">Επαναφορά</button>
@@ -57,8 +58,20 @@
   <script>
     let chart;
     const ctx = document.getElementById('titrationChart').getContext('2d');
+
     if (!Chart.registry.plugins.get('annotation')) {
       console.error("Το Chart Annotation plugin δεν φορτώθηκε σωστά.");
+    }
+
+    function updateLabel() {
+      // Αν ο τύπος ανάλυσης είναι strong_acid_weak_base, τότε η ετικέτα δείχνει pKb, αλλιώς pKa.
+      const type = document.getElementById('analysisType').value;
+      const label = document.getElementById('pKaLabel');
+      if (type === "strong_acid_weak_base") {
+        label.textContent = "pKb:";
+      } else {
+        label.textContent = "pKa:";
+      }
     }
 
     function resetValues() {
@@ -68,9 +81,10 @@
       document.getElementById('pKa').value = 4.76;
       document.getElementById('stepSize').value = 1;
       updateChart();
+      updateLabel();
     }
 
-    function calculatepH(type, C_acid, C_base, V_init, pKa, step) {
+    function calculatepH(type, C_acid, C_base, V_init, pKaInput, step) {
       let volumes = [];
       let pH = [];
       const V_init_L = V_init / 1000;
@@ -94,7 +108,7 @@
           }
         } else {
           totalVolume = V_init_L + (V_added / 1000);
-          // Για τις περιπτώσεις εκτός του "strong_acid_weak_base", θεωρούμε το αρχικό διάλυμα ως το οξύ.
+          // Για όλες τις περιπτώσεις εκτός του "strong_acid_weak_base", το αρχικό διάλυμα θεωρείται ως οξύ.
           if (type !== "strong_acid_weak_base") {
             n_acid = C_acid * V_init_L;
             n_base = C_base * (V_added / 1000);
@@ -111,45 +125,40 @@
           }
           else if (type === "weak_acid_strong_base") {
             if (V_added === 0) {
-              currentpH = (pKa - Math.log10(C_acid)) / 2;
+              currentpH = (pKaInput - Math.log10(C_acid)) / 2;
             }
             else if (n_base < n_acid - epsilon) {
-              currentpH = pKa + Math.log10(n_base / (n_acid - n_base));
+              currentpH = pKaInput + Math.log10(n_base / (n_acid - n_base));
             }
             else if (Math.abs(n_base - n_acid) < epsilon) {
-              currentpH = 7 + 0.5 * (pKa + Math.log10(n_acid / totalVolume));
+              currentpH = 7 + 0.5 * (pKaInput + Math.log10(n_acid / totalVolume));
             }
             else {
               currentpH = 14 + Math.log10((n_base - n_acid) / totalVolume);
             }
           }
           else if (type === "strong_acid_weak_base") {
-            // Διορθωμένη λογική: αντιμετωπίζουμε την ογκομέτρηση ως προσθήκη ισχυρού οξέος σε διάλυμα ασθενούς βάσης.
-            // Ο αρχικός όγκος (V_init) αντιστοιχεί στο διάλυμα της ασθενούς βάσης:
-            //    n_base = C_base * V_init_L
-            // και το προστιθέμενο ισχυρό οξύ:
-            //    n_acid = C_acid * (V_added/1000)
-            totalVolume = V_init_L + (V_added / 1000);
+            // Διορθωμένη λογική: Αντιμετωπίζουμε την ογκομέτρηση ως προσθήκη ισχυρού οξέος σε διάλυμα ασθενούς βάσης.
+            // Αρχικά, το διάλυμα της ασθενούς βάσης:
             n_base = C_base * V_init_L;
+            // Το προστιθέμενο ισχυρό οξύ:
             n_acid = C_acid * (V_added / 1000);
+            totalVolume = V_init_L + (V_added / 1000);
+            // Εδώ, το πεδίο εισόδου αντιπροσωπεύει το pKb (παρέχεται άμεσα από τον χρήστη).
+            const pKb = pKaInput; // Χρησιμοποιούμε απευθείας το pKb που δόθηκε.
             if (V_added === 0) {
-              // Αρχικό pH του διαλύματος ασθενούς βάσης.
-              // Η προσέγγιση εδώ χρησιμοποιεί την εξίσωση για τη υδρόλυση του BH+:
-              // pH ≈ 14 - 0.5*(pKb - log10(C_base)), όπου pKb = 14 - pKa.
-              let pKb = 14 - pKa;
+              // Αρχικό pH του διαλύματος ασθενούς βάσης, υπολογίζεται με βάση την υδρόλυση του συζευγμένου ιόντος:
+              // pH ≈ 14 - 0.5*(pKb - log10(C_base))
               currentpH = 14 - 0.5 * (pKb - Math.log10(C_base));
             } else if (n_acid < n_base - epsilon) {
-              // Περιοχή buffer: χρησιμοποιούμε την εξίσωση Henderson-Hasselbalch για το σύστημα:
+              // Περιοχή buffer: χρησιμοποιούμε την εξίσωση Henderson-Hasselbalch για σύστημα weak base/συζευγμένου οξέος:
               // pH = 14 - [ pKb + log10(n_acid/(n_base - n_acid)) ]
-              let pKb = 14 - pKa;
               currentpH = 14 - (pKb + Math.log10(n_acid / (n_base - n_acid)));
             } else if (Math.abs(n_acid - n_base) < epsilon) {
               // Σημείο ισοδυναμίας:
-              // Σε αυτό το σημείο, όλο το αρχικό B έχει μετατραπεί στο BH+.
-              // Η συγκέντρωση του BH+ είναι: C = n_base/totalVolume.
-              // Λύνοντας την εξίσωση του υδρολυτικού ισοζυγίου για BH+:
-              // pH ≈ ½*(pKa - log10(C))
-              currentpH = 0.5 * (pKa - Math.log10(n_base / totalVolume));
+              // Εδώ, η συγκέντρωση του συζευγμένου ιόντος είναι: C = n_base/totalVolume και
+              // pH ≈ 0.5 * ((14 - pKb) - log10(C))
+              currentpH = 0.5 * ((14 - pKb) - Math.log10(n_base / totalVolume));
             } else {
               // Περιοχή υπερχείλισης οξέος:
               currentpH = -Math.log10((n_acid - n_base) / totalVolume);
@@ -167,10 +176,12 @@
       const C_acid = parseFloat(document.getElementById('concAcid').value);
       const C_base = parseFloat(document.getElementById('concBase').value);
       const V_init = parseFloat(document.getElementById('volumeAcid').value);
-      const pKa = parseFloat(document.getElementById('pKa').value);
+      // Το πεδίο pKa χρησιμοποιείται ως pKa για τις περισσότερες περιπτώσεις,
+      // αλλά για "strong_acid_weak_base" αντιπροσωπεύει το pKb.
+      const pKaInput = parseFloat(document.getElementById('pKa').value);
       const step = parseFloat(document.getElementById('stepSize').value);
 
-      // Ενεργοποίηση του πεδίου pKa όταν απαιτείται
+      // Ενεργοποίηση/απενεργοποίηση του πεδίου pKa ανάλογα με τον τύπο ανάλυσης
       if (type === "weak_acid_strong_base" || type === "strong_acid_weak_base") {
         document.getElementById('pKa').disabled = false;
       } else {
@@ -180,17 +191,17 @@
       // Υπολογισμός σημείου ισοδυναμίας (equivalence point)
       let eqVol;
       if (type === "strong_acid_weak_base") {
-        // Στην περίπτωση αυτή το σημείο ισοδυναμίας επιτυγχάνεται όταν:
-        //   n_base = C_base * V_init_L  =  n_acid = C_acid * V_added  =>  V_added = (C_base * V_init) / C_acid
+        // Για την περίπτωση strong_acid_weak_base:
+        // Το σημείο ισοδυναμίας επιτυγχάνεται όταν n_base (ασθενής βάση) = n_acid (προστιθέμενο ισχυρό οξύ),
+        // δηλαδή: V_eq = (C_base * V_init) / C_acid.
         eqVol = (C_base * V_init) / C_acid;
       } else if (type === "strong_acid_strong_base") {
         eqVol = (C_acid * V_init) / C_base;
       } else {
-        // Για τις άλλες περιπτώσεις διατηρούμε τον ίδιο υπολογισμό
         eqVol = (C_acid * V_init) / C_base;
       }
       
-      const data = calculatepH(type, C_acid, C_base, V_init, pKa, step);
+      const data = calculatepH(type, C_acid, C_base, V_init, pKaInput, step);
       
       if (chart) chart.destroy();
       chart = new Chart(ctx, {
@@ -232,6 +243,8 @@
       });
     }
 
+    // Αρχική εκτέλεση
+    updateLabel();
     updateChart();
   </script>
 </body>
