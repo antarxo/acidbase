@@ -2,66 +2,77 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Ρεαλιστική Προσομοίωση με p5.js</title>
+  <title>Προσομοίωση με pipet3 & breaker3</title>
   <!-- Φόρτωση του p5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
   <script>
-    // Μεταβλητές για τις εικόνες
-    let pipetteImg, beakerImg;
+    // Μεταβλητές εικόνων
+    let pipetteImg, breakerImg;
     
-    // Μεταβλητές για το animation και το γέμισμα
-    let beakerFill = 0;      // ποσοστό γέμισματος του ποτηριού (0-100)
-    let dropY;               // τρέχουσα θέση της σταγόνας
-    let dropActive = false;  // αν η σταγόνα κινείται
-    let dropSpeed = 5;       // ταχύτητα της σταγόνας
+    // Μεταβλητές για animation και γεμάτο
+    let beakerFill = 0; // ποσοστό γεμίσματος (0-100)
+    let dropY;          // τρέχουσα θέση της σταγόνας
+    let dropActive = false;
+    let dropSpeed = 5;
     
-    // Διαστάσεις και θέσεις του pipet
-    let pipetteX = 100;      
-    let pipetteY = 120;
-    let pipetteW = 80, pipetteH = 150;
+    // Θέσεις εικόνων – θα υπολογιστούν δυναμικά με βάση τις φυσικές τους διαστάσεις
+    let marginRight = 20;
+    let marginTop = 20;
     
-    // Διαστάσεις του ποτηριού (beaker)
-    let beakerW = 150, beakerH = 250;
-    let beakerOffset = 20; // απόσταση μεταξύ pipet και άνω μέρους του ποτηριού
-    let beakerY;         // κέντρο του ποτηριού (θα υπολογιστεί)
+    // Θέσεις pipet3 και breaker3 (θα χρησιμοποιήσουμε imageMode(CORNER))
+    let pipetX, pipetY;         // pipet3 θέση (αριστερή-πάνω γωνία)
+    let breakerX, breakerY;     // breaker3 θέση (αριστερή-πάνω γωνία)
     
-    // Παράμετροι για το σχεδιασμό του υγρού
-    let scaleFactor = 10; // κλίμακα για τις διαστάσεις της έλλειψης
-    let liquidEllipseWidth = 6.36 * scaleFactor;  // πλάτος έλλειψης υγρού
-    let liquidEllipseHeight = 1.93 * scaleFactor;   // ύψος έλλειψης υγρού
-    let bottomOffset = 15; // απόσταση από το κάτω μέρος του ποτηριού για την σταθερή έλλειψη
-    let topOffset = 20;    // απόσταση από το άνω μέρος του ποτηριού για το ανώτερο όριο του γεμίσματος
+    // Ορισμός αρχικής θέσης της σταγόνας: να ξεκινάει από το κάτω άκρο του pipet3
+    let initialDropY;
     
-    // Αρχική θέση για τη σταγόνα (ξεκινά κοντά στο pipet)
-    let initialDropY = 100;
+    // Παράμετροι για το σχεδιασμό του υγρού μέσα στο breaker3
+    // Οι φυσικές διαστάσεις της "έλλειψης" καθορίζουν το πλάτος του υγρού
+    let scaleFactor = 10; // παράγοντας κλίμακας για την έλλειψη
+    let liquidEllipseWidth = 6.36 * scaleFactor;   // πλάτος έλλειψης
+    let liquidEllipseHeight = 1.93 * scaleFactor;    // ύψος έλλειψης
+    // Ορισμός ορίων μέσα στο breaker3 για το υγρό (offset από το πάνω και κάτω άκρο του εσωτερικού)
+    let liquidContainerTopOffset = 30;
+    let liquidContainerBottomOffset = 20;
+    // Θα υπολογιστούν στο draw με βάση το breakerImg
     
     function preload() {
-      pipetteImg = loadImage('pipet2.png', 
-        () => { console.log("pipet2.png loaded successfully"); },
-        () => { console.error("Error loading pipet2.png"); }
+      // Φόρτωση των νέων εικόνων
+      pipetteImg = loadImage('pipet3.png', 
+        () => { console.log("pipet3.png loaded successfully"); },
+        () => { console.error("Error loading pipet3.png"); }
       );
-      
-      beakerImg = loadImage('beaker2.png', 
-        () => { console.log("beaker2.png loaded successfully"); },
-        () => { console.error("Error loading beaker2.png"); }
+      breakerImg = loadImage('breaker3.png', 
+        () => { console.log("breaker3.png loaded successfully"); },
+        () => { console.error("Error loading breaker3.png"); }
       );
     }
     
     function setup() {
-      createCanvas(400, 600);
-      console.log("Setup executed, canvas created");
+      createCanvas(600, 800);
       
-      // Υπολογισμός του κάτω μέρους του pipet και θέσης του ποτηριού
-      let pipetteBottom = pipetteY + pipetteH / 2;  // κάτω μέρος του pipet
-      // Το πάνω μέρος του ποτηριού θα ξεκινά στο pipetteBottom + beakerOffset,
-      // άρα το κέντρο του ποτηριού θα είναι:
-      beakerY = (pipetteBottom + beakerOffset) + beakerH / 2;
+      // Αφού έχουν φορτωθεί οι εικόνες, υπολογίζουμε τις θέσεις ώστε:
+      // 1. Οι δεξιές άκρες τους να στοιχίζονται (δηλαδή x + width = canvas.width - marginRight)
+      // 2. Το κάτω άκρο του pipet3 να συμπίπτει με το πάνω άκρο του breaker3
       
+      // pipet3: θέση με βάση το marginTop και δεξιά στοίχιση
+      pipetX = width - marginRight - pipetteImg.width;
+      pipetY = marginTop;
+      
+      // Το κάτω άκρο του pipet3:
+      let pipetBottom = pipetY + pipetteImg.height;
+      initialDropY = pipetBottom;  // η σταγόνα ξεκινάει από εδώ
+      
+      // breaker3: τοποθετούμε το πάνω του άκρο να είναι ίσο με pipetBottom
+      breakerX = width - marginRight - breakerImg.width;
+      breakerY = pipetBottom; // το πάνω άκρο του breaker3
+      
+      // Αρχικοποίηση της θέσης της σταγόνας
       dropY = initialDropY;
       
-      // Δημιουργία κουμπιών αλληλεπίδρασης
+      // Δημιουργία κουμπιών
       let btnFill = createButton("Προσθήκη Αντιδραστηρίου");
       btnFill.position(10, height + 20);
       btnFill.mousePressed(startDrop);
@@ -74,76 +85,69 @@
     function draw() {
       background(240);
       
-      // 1. Σχεδίαση του ποτηριού (beaker) στην καθορισμένη θέση
-      imageMode(CENTER);
-      if(beakerImg) {
-        image(beakerImg, width/2, beakerY, beakerW, beakerH);
+      // 1. Σχεδίαση του breaker3 (ποτήρι) με φυσικές διαστάσεις
+      imageMode(CORNER);
+      if(breakerImg) {
+        image(breakerImg, breakerX, breakerY);
       } else {
         fill(255);
-        rect(width/2 - beakerW/2, beakerY - beakerH/2, beakerW, beakerH);
-        console.error("beakerImg is not loaded");
+        rect(breakerX, breakerY, 150, 250);
       }
       
-      // 2. Σχεδίαση του υγρού μέσα στο ποτήρι (με βάση το beakerY)
-      drawLiquid();
-      
-      // 3. Σχεδίαση του pipet (που βρίσκεται ψηλότερα από το ποτήρι)
-      imageMode(CENTER);
-      if(pipetteImg) {
-        image(pipetteImg, pipetteX, pipetteY, pipetteW, pipetteH);
-      } else {
-        fill(200);
-        rect(pipetteX - pipetteW/2, pipetteY - pipetteH/2, pipetteW, pipetteH);
-        console.error("pipetteImg is not loaded");
-      }
-      
-      // 4. Αν η σταγόνα είναι ενεργή, σχεδιάζουμε και την κίνησή της
-      if(dropActive) {
-        drawDrop();
-        dropY += dropSpeed;
-        // Ορίζουμε το όριο του υγρού μέσα στο ποτήρι
-        let bottomLiquidY = beakerY + beakerH/2 - bottomOffset;
-        if(dropY > bottomLiquidY - liquidEllipseHeight/2) {
-          dropActive = false;
-          dropY = initialDropY;
-          beakerFill = min(beakerFill + 10, 100);
-          console.log("Incremented beakerFill to:", beakerFill);
-        }
-      }
-    }
-    
-    // Σχεδίαση του υγρού μέσα στο ποτήρι:
-    // - Το υγρό αποτελείται από ένα ορθογώνιο που έχει πλάτος ίσο με το πλάτος της έλλειψης
-    //   και εκτείνεται από τον οριζόντιο άξονα της σταθερής (κάτω) έλλειψης μέχρι τον οριζόντιο άξονα της πάνω μετακινούμενης έλλειψης.
-    // - Σχεδιάζουμε μία σταθερή έλλειψη στον πυθμένα και μία πάνω έλλειψη που μεταβάλλεται σύμφωνα με το γεμάτο.
-    function drawLiquid() {
-      let bottomLiquidY = beakerY + beakerH/2 - bottomOffset;  // οριζόντιος άξονας για την κάτω έλλειψη
-      let topLiquidLimit = beakerY - beakerH/2 + topOffset;      // ανώτερο όριο μέσα στο beaker
-      let maxLiquidHeight = bottomLiquidY - topLiquidLimit;
+      // 2. Σχεδίαση του υγρού μέσα στο breaker3
+      // Υπολογισμός ορίων του εσωτερικού του breaker
+      let containerTop = breakerY + liquidContainerTopOffset;
+      let containerBottom = breakerY + breakerImg.height - liquidContainerBottomOffset;
+      let maxLiquidHeight = containerBottom - containerTop;
       let liquidHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
-      let topLiquidY = bottomLiquidY - liquidHeight;
+      // Η πάνω έλλειψη (μετακινούμενη) τοποθετείται στο σημείο όπου τελειώνει το γεμάτο
+      let topLiquidY = containerBottom - liquidHeight;
+      // Για οριζόντια στοίχιση, τοποθετούμε το υγρό ώστε η δεξιά πλευρά του να ευθυγραμμίζεται με τη δεξιά πλευρά του breaker3
+      let liquidX = breakerX + breakerImg.width - liquidEllipseWidth;
       
       noStroke();
       fill(30, 136, 229); // solid χρώμα
       
-      // Το ορθογώνιο υγρού με πλάτος ίσο με το πλάτος της έλλειψης:
+      // Το ορθογώνιο του υγρού: από την πάνω έλλειψη έως την κάτω έλλειψη
       rectMode(CORNER);
-      rect(width/2 - liquidEllipseWidth/2, topLiquidY, liquidEllipseWidth, liquidHeight);
+      rect(liquidX, topLiquidY, liquidEllipseWidth, liquidHeight);
       
       // Σχεδίαση της πάνω (μετακινούμενης) έλλειψης
       ellipseMode(CENTER);
-      ellipse(width/2, topLiquidY, liquidEllipseWidth, liquidEllipseHeight);
+      ellipse(liquidX + liquidEllipseWidth/2, topLiquidY, liquidEllipseWidth, liquidEllipseHeight);
       
       // Σχεδίαση της σταθερής, κάτω έλλειψης
-      ellipse(width/2, bottomLiquidY, liquidEllipseWidth, liquidEllipseHeight);
+      ellipse(liquidX + liquidEllipseWidth/2, containerBottom, liquidEllipseWidth, liquidEllipseHeight);
+      
+      // 3. Σχεδίαση του pipet3 (με φυσικές διαστάσεις)
+      imageMode(CORNER);
+      if(pipetteImg) {
+        image(pipetteImg, pipetX, pipetY);
+      } else {
+        fill(200);
+        rect(pipetX, pipetY, 80, 150);
+      }
+      
+      // 4. Σχεδίαση και κίνηση της σταγόνας που έρχεται από το pipet3
+      if(dropActive) {
+        drawDrop();
+        dropY += dropSpeed;
+        // Όριο απορρόφησης της σταγόνας: όταν φτάσει στο κάτω άκρο του breaker3 (containerBottom)
+        if(dropY > containerBottom - liquidEllipseHeight/2) {
+          dropActive = false;
+          dropY = initialDropY;
+          beakerFill = min(beakerFill + 10, 100);
+        }
+      }
     }
     
-    // Σχεδίαση της σταγόνας που έρχεται από το pipet
+    // Σχεδίαση της σταγόνας: να ξεκινάει από το κάτω άκρο του pipet3 (δεξιά πλευρά)
     function drawDrop() {
       push();
       fill(30, 136, 229);
       noStroke();
-      ellipse(pipetteX, dropY, 10, 15);
+      // Η σταγόνα βγαίνει από το κάτω άκρο του pipet3, δηλαδή (pipetX + pipetteImg.width, dropY)
+      ellipse(pipetX + pipetteImg.width, dropY, 10, 15);
       pop();
     }
     
@@ -151,7 +155,6 @@
     function startDrop() {
       if (!dropActive) {
         dropActive = true;
-        console.log("Drop started");
       }
     }
     
@@ -160,7 +163,6 @@
       beakerFill = 0;
       dropY = initialDropY;
       dropActive = false;
-      console.log("Reset executed");
     }
   </script>
 </body>
