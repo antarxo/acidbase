@@ -1,310 +1,81 @@
 <!DOCTYPE html>
 <html lang="el">
-<head>
-  <meta charset="UTF-8">
-  <title>Ζωντανή Προσομοίωση Ογκομέτρησης - Διάταξη Παραμέτρων</title>
-  <!-- Chart.js και το annotation plugin -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .container { display: grid; grid-template-columns: 1fr 450px; gap: 20px; }
-    .chart-container { width: 800px; height: 500px; }
-    /* Το παράθυρο παραμέτρων χωρίζεται σε δύο στήλες */
-    .param-box { background: #f0f0f0; padding: 15px; border-radius: 8px; }
-    .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .param-section { display: flex; flex-direction: column; }
-    label { margin-bottom: 5px; }
-    input, select { margin-bottom: 10px; padding: 5px; }
-    button { padding: 5px 10px; }
-    /* Στυλ για τα γραφικά στοιχεία (στη στήλη αριστερά) */
-    .graphics-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      height: 100%;
-    }
-    /* Στυλ για την προχοΐδα ως ογκομετρικό κύλινδρο */
-    .dropper-container {
-      position: relative;
-      width: 80px;
-      height: 200px;
-      background: #ddd;
-      border: 2px solid #333;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-    .dropper-head {
-      width: 40px;
-      height: 40px;
-      background: #eee;
-      border: 2px solid #333;
-      border-radius: 50%;
-      position: absolute;
-      top: -25px;
-      left: 50%;
-      transform: translateX(-50%);
-      animation: spin 2s linear infinite;
-    }
-    @keyframes spin {
-      from { transform: translateX(-50%) rotate(0deg); }
-      to { transform: translateX(-50%) rotate(360deg); }
-    }
-    /* Στυλ για το ποτήρι */
-    .glass-container {
-      position: relative;
-      width: 100px;
-      height: 180px;
-      border: 2px solid #333;
-      border-radius: 0 0 8px 8px;
-      overflow: hidden;
-      background: #fff;
-      margin-top: 20px;
-    }
-    .glass-fill {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      background: rgba(30, 136, 229, 0.6);
-      transition: height 0.5s ease;
-      height: 0%;
-    }
-  </style>
-</head>
-<body>
-  <h1>Ζωντανή Προσομοίωση Ογκομέτρησης</h1>
-  <div class="container">
-    <div class="chart-container">
-      <canvas id="titrationChart"></canvas>
-    </div>
-    
-    <!-- Παράθυρο παραμέτρων με διάταξη δύο στηλών: αριστερά γραφικά, δεξιά παράμετροι -->
-    <div class="param-box">
-      <div class="param-grid">
-        <!-- Στήλη Γραφικών Στοιχείων -->
-        <div class="param-section">
-          <div class="graphics-container">
-            <!-- Ο γίγαντας ογκομετρικός κύλινδρος (προχοΐδα) -->
-            <div class="dropper-container">
-              <div class="dropper-head"></div>
-            </div>
-            <!-- Το ποτήρι για το ογκομετρόμενο διάλυμα -->
-            <div class="glass-container">
-              <div id="glassFill" class="glass-fill"></div>
-            </div>
-          </div>
-        </div>
+  <head>
+    <meta charset="UTF-8">
+    <title>p5.js Προσομοίωση Ογκομέτρησης</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  </head>
+  <body>
+    <script>
+      // Μεταβλητή για το ποσοστό γέμισματος του ποτηριού (0 έως 100)
+      let fillLevel = 0;
+      // Μεταβλητή για την περιστροφή του κεφαλιού της προχοΐδας
+      let dropperAngle = 0;
+      // Βήμα προσθήκης (αύξηση ποσοστού γέμισματος)
+      let fillIncrement = 1;
+      
+      function setup() {
+        createCanvas(400, 600);
         
-        <!-- Στήλη Παραμέτρων -->
-        <div class="param-section">
-          <label for="analysisType">Τύπος Ανάλυσης:</label>
-          <select id="analysisType" onchange="updateChart(); updateLabel();">
-            <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
-            <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-            <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
-            <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
-          </select>
-          
-          <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
-          <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
-          
-          <label for="concBase">Συγκέντρωση Βάσης (M):</label>
-          <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
-          
-          <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
-          <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
-          
-          <label for="pKa" id="pKaLabel">pKa:</label>
-          <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
-          
-          <label for="stepSize">Βήμα προσθήκης (mL):</label>
-          <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
-          
-          <button onclick="resetValues()">Επαναφορά</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let chart;
-    const ctx = document.getElementById('titrationChart').getContext('2d');
-
-    if (!Chart.registry.plugins.get('annotation')) {
-      console.error("Το Chart Annotation plugin δεν φορτώθηκε σωστά.");
-    }
-
-    function updateLabel() {
-      const type = document.getElementById('analysisType').value;
-      const label = document.getElementById('pKaLabel');
-      label.textContent = (type === "strong_acid_weak_base") ? "pKb:" : "pKa:";
-    }
-
-    // Επαναφορά τιμών και αρχική εμφάνιση (το ποτήρι ξεκινάει κενό)
-    function resetValues() {
-      document.getElementById('concAcid').value = 0.1;
-      document.getElementById('concBase').value = 0.1;
-      document.getElementById('volumeAcid').value = 50;
-      document.getElementById('pKa').value = 4.76;
-      document.getElementById('stepSize').value = 1;
-      updateChart();
-      updateLabel();
-      updateGlassFill(0);
-    }
-
-    function calculatepH(type, C_acid, C_base, V_init, pKaInput, step) {
-      let volumes = [];
-      let pH = [];
-      const V_init_L = V_init / 1000;
-      const maxVadded = 100; // σε mL
-      const epsilon = 1e-8;
-
-      for (let V_added = 0; V_added <= maxVadded; V_added += step) {
-        let totalVolume, n_acid, n_base, currentpH = 0;
-        if (type === "strong_base_strong_acid") {
-          totalVolume = V_init_L + (V_added / 1000);
-          n_base = C_base * V_init_L;
-          n_acid = C_acid * (V_added / 1000);
-          const excess = n_base - n_acid;
-          if (excess > epsilon) {
-            let pOH = -Math.log10(excess / totalVolume);
-            currentpH = 14 - pOH;
-          } else if (excess < -epsilon) {
-            currentpH = -Math.log10((n_acid - n_base) / totalVolume);
-          } else {
-            currentpH = 7;
-          }
-        } else {
-          totalVolume = V_init_L + (V_added / 1000);
-          if (type !== "strong_acid_weak_base") {
-            n_acid = C_acid * V_init_L;
-            n_base = C_base * (V_added / 1000);
-          }
-          if (type === "strong_acid_strong_base") {
-            const excess = n_acid - n_base;
-            if (excess > epsilon) {
-              currentpH = -Math.log10(excess / totalVolume);
-            } else if (excess < -epsilon) {
-              currentpH = 14 + Math.log10((-excess) / totalVolume);
-            } else {
-              currentpH = 7;
-            }
-          }
-          else if (type === "weak_acid_strong_base") {
-            if (V_added === 0) {
-              currentpH = (pKaInput - Math.log10(C_acid)) / 2;
-            }
-            else if (n_base < n_acid - epsilon) {
-              currentpH = pKaInput + Math.log10(n_base / (n_acid - n_base));
-            }
-            else if (Math.abs(n_base - n_acid) < epsilon) {
-              currentpH = 7 + 0.5 * (pKaInput + Math.log10(n_acid / totalVolume));
-            }
-            else {
-              currentpH = 14 + Math.log10((n_base - n_acid) / totalVolume);
-            }
-          }
-          else if (type === "strong_acid_weak_base") {
-            n_base = C_base * V_init_L;
-            n_acid = C_acid * (V_added / 1000);
-            totalVolume = V_init_L + (V_added / 1000);
-            const pKb = pKaInput;
-            if (V_added === 0) {
-              currentpH = 14 - 0.5 * (pKb - Math.log10(C_base));
-            } else if (n_acid < n_base - epsilon) {
-              currentpH = 14 - (pKb + Math.log10(n_acid / (n_base - n_acid)));
-            } else if (Math.abs(n_acid - n_base) < epsilon) {
-              currentpH = 0.5 * ((14 - pKb) - Math.log10(n_base / totalVolume));
-            } else {
-              currentpH = -Math.log10((n_acid - n_base) / totalVolume);
-            }
-          }
-        }
-        volumes.push(V_added);
-        pH.push(currentpH);
-      }
-      return { volumes, pH };
-    }
-
-    function updateChart() {
-      const type = document.getElementById('analysisType').value;
-      const C_acid = parseFloat(document.getElementById('concAcid').value);
-      const C_base = parseFloat(document.getElementById('concBase').value);
-      const V_init = parseFloat(document.getElementById('volumeAcid').value);
-      const pKaInput = parseFloat(document.getElementById('pKa').value);
-      const step = parseFloat(document.getElementById('stepSize').value);
-
-      if (type === "weak_acid_strong_base" || type === "strong_acid_weak_base") {
-        document.getElementById('pKa').disabled = false;
-      } else {
-        document.getElementById('pKa').disabled = true;
+        // Δημιουργία κουμπιού για προσθήκη αντιδραστηρίου
+        let btnFill = createButton("Προσθήκη Αντιδραστηρίου");
+        btnFill.position(10, height + 20);
+        btnFill.mousePressed(increaseFill);
+        
+        // Δημιουργία κουμπιού για επαναφορά του ποτηριού
+        let btnReset = createButton("Επαναφορά");
+        btnReset.position(200, height + 20);
+        btnReset.mousePressed(resetFill);
       }
       
-      let eqVol;
-      if (type === "strong_acid_weak_base") {
-        eqVol = (C_base * V_init) / C_acid;
-      } else if (type === "strong_acid_strong_base") {
-        eqVol = (C_acid * V_init) / C_base;
-      } else {
-        eqVol = (C_acid * V_init) / C_base;
+      function draw() {
+        background(220);
+        
+        // Σχεδίαση της προχοΐδας (κύλινδρος με περιστρεφόμενο κεφάλι) πάνω από το ποτήρι
+        push();
+          translate(width / 2, 100);
+          // Σώμα προχοΐδας (αντιπροσωπεύεται ως ορθογώνιο με στρογγυλεμένες γωνίες)
+          fill(180);
+          rectMode(CENTER);
+          rect(0, 30, 40, 100, 10);
+          // Κεφάλι προχοΐδας (περιστρέφεται)
+          push();
+            translate(0, -20);
+            rotate(radians(dropperAngle));
+            fill(200);
+            ellipse(0, 0, 40, 40);
+          pop();
+        pop();
+        
+        // Σχεδίαση του ποτηριού (αντιπροσωπεύεται ως ορθογώνιο με στρογγυλεμένες γωνίες)
+        push();
+          translate(width / 2, 300);
+          stroke(0);
+          fill(255);
+          rectMode(CENTER);
+          rect(0, 0, 100, 200, 10);
+          // Γέμισμα του ποτηριού (με μπλε απόχρωση)
+          noStroke();
+          fill(30, 136, 229, 150);
+          let fillHeight = map(fillLevel, 0, 100, 0, 200);
+          rectMode(CORNER);
+          rect(-50, 100 - fillHeight, 100, fillHeight);
+        pop();
+        
+        // Ενημέρωση του dropper για animation
+        dropperAngle = (dropperAngle + 2) % 360;
       }
       
-      const data = calculatepH(type, C_acid, C_base, V_init, pKaInput, step);
+      // Συνάρτηση για αύξηση του ποσοστού γέμισματος (με βάση το fillIncrement)
+      function increaseFill() {
+        fillLevel += fillIncrement;
+        if (fillLevel > 100) fillLevel = 100;
+      }
       
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: data.volumes,
-          datasets: [{
-            label: 'pH',
-            data: data.pH,
-            borderColor: '#e53935',
-            tension: 0.1
-          }]
-        },
-        options: {
-          scales: { 
-            y: { min: 0, max: 14, title: { display: true, text: 'pH' } },
-            x: { title: { display: true, text: 'Όγκος προστιθέμενου αντιδραστηρίου (mL)' } }
-          },
-          plugins: {
-            annotation: {
-              annotations: {
-                equivalencePoint: {
-                  type: 'line',
-                  scaleID: 'x',
-                  xMin: eqVol,
-                  xMax: eqVol,
-                  borderColor: '#1e88e5',
-                  borderWidth: 2,
-                  label: { 
-                    content: 'Σημείο Ισοδυναμίας',
-                    enabled: true,
-                    position: 'end'
-                  }
-                }
-              }
-            }
-          }
-        }
-      });
-      
-      // Ενημέρωση του ποτηριού βάσει της προσθήκης αντιδραστηρίου
-      const latestVolume = data.volumes[data.volumes.length - 1];
-      let fillPercent = Math.min((latestVolume / 100) * 100, 100);
-      updateGlassFill(fillPercent);
-    }
-
-    function updateGlassFill(percent) {
-      const glassFill = document.getElementById('glassFill');
-      glassFill.style.height = percent + '%';
-    }
-
-    // Αρχική εκτέλεση: Το ποτήρι ξεκινάει κενό.
-    updateLabel();
-    updateChart();
-  </script>
-</body>
+      // Συνάρτηση για επαναφορά του ποτηριού (προκαθορισμένο fillLevel = 0)
+      function resetFill() {
+        fillLevel = 0;
+      }
+    </script>
+  </body>
 </html>
