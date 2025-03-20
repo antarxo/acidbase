@@ -2,23 +2,28 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Ζωντανή Προσομοίωση Ογκομέτρησης - Διάταξη Dropper πάνω από το Ποτήρι</title>
+  <title>Ζωντανή Προσομοίωση Ογκομέτρησης - Διάταξη Παραμέτρων</title>
   <!-- Chart.js και το annotation plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    .container { display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
+    .container { display: grid; grid-template-columns: 1fr 450px; gap: 20px; }
     .chart-container { width: 800px; height: 500px; }
+    /* Το παράθυρο παραμέτρων χωρίζεται σε δύο στήλες */
     .param-box { background: #f0f0f0; padding: 15px; border-radius: 8px; }
-    input, select { width: 100px; }
-    label { display: inline-block; width: 140px; }
-    /* Ομαδοποίηση των γραφικών στοιχείων σε μία κατακόρυφη διάταξη */
+    .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .param-section { display: flex; flex-direction: column; }
+    label { margin-bottom: 5px; }
+    input, select { margin-bottom: 10px; padding: 5px; }
+    button { padding: 5px 10px; }
+    /* Στυλ για τα γραφικά στοιχεία (στη στήλη αριστερά) */
     .graphics-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 20px;
+      justify-content: space-between;
+      height: 100%;
     }
     /* Στυλ για την προχοΐδα ως ογκομετρικό κύλινδρο */
     .dropper-container {
@@ -28,12 +33,8 @@
       background: #ddd;
       border: 2px solid #333;
       border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
     }
-    /* Η προχοΐδα με στροφιγγά στο πάνω μέρος του κυλίνδρου */
     .dropper-head {
       width: 40px;
       height: 40px;
@@ -42,13 +43,15 @@
       border-radius: 50%;
       position: absolute;
       top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
       animation: spin 2s linear infinite;
     }
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
     }
-    /* Μικρότερο ποτήρι */
+    /* Στυλ για το ποτήρι */
     .glass-container {
       position: relative;
       width: 100px;
@@ -57,6 +60,7 @@
       border-radius: 0 0 8px 8px;
       overflow: hidden;
       background: #fff;
+      margin-top: 20px;
     }
     .glass-fill {
       position: absolute;
@@ -64,80 +68,61 @@
       width: 100%;
       background: rgba(30, 136, 229, 0.6);
       transition: height 0.5s ease;
-    }
-    /* Επιλογή διαλύματος για το ενιαίο στοιχείο */
-    .solution-select {
-      margin-top: 5px;
-      text-align: center;
+      height: 0%;
     }
   </style>
 </head>
 <body>
   <h1>Ζωντανή Προσομοίωση Ογκομέτρησης</h1>
-  
   <div class="container">
     <div class="chart-container">
       <canvas id="titrationChart"></canvas>
     </div>
     
-    <!-- Παράθυρο παραμέτρων με ενσωματωμένα γραφικά στοιχεία (Dropper πάνω από το ποτήρι) -->
+    <!-- Παράθυρο παραμέτρων με διάταξη δύο στηλών: αριστερά γραφικά, δεξιά παράμετροι -->
     <div class="param-box">
-      <h3>Παράμετροι & Γραφικά Στοιχεία</h3>
-      
-      <div class="graphics-container">
-        <!-- Ο ογκομετρικός κύλινδρος με προχοΐδα στο πάνω μέρος -->
-        <div class="dropper-container">
-          <div class="dropper-head"></div>
-          <div class="solution-select">
-            <label for="dropperSolution">Διάλυμα:</label>
-            <select id="dropperSolution">
-              <option value="διάλυμα Α">Α</option>
-              <option value="διάλυμα Β">Β</option>
-              <option value="διάλυμα Γ">Γ</option>
-            </select>
+      <div class="param-grid">
+        <!-- Στήλη Γραφικών Στοιχείων -->
+        <div class="param-section">
+          <div class="graphics-container">
+            <!-- Ο γίγαντας ογκομετρικός κύλινδρος (προχοΐδα) -->
+            <div class="dropper-container">
+              <div class="dropper-head"></div>
+            </div>
+            <!-- Το ποτήρι για το ογκομετρόμενο διάλυμα -->
+            <div class="glass-container">
+              <div id="glassFill" class="glass-fill"></div>
+            </div>
           </div>
         </div>
         
-        <!-- Το ποτήρι για το ογκομετρόμενο διάλυμα -->
-        <div class="glass-container">
-          <!-- Αρχικά το ποτήρι ξεκινάει κενό (0% γέμισμα) -->
-          <div id="glassFill" class="glass-fill" style="height: 0%;"></div>
-        </div>
-        <div class="solution-select">
-          <label for="glassSolution">Διάλυμα:</label>
-          <select id="glassSolution">
-            <option value="διάλυμα 1">1</option>
-            <option value="διάλυμα 2">2</option>
-            <option value="διάλυμα 3">3</option>
+        <!-- Στήλη Παραμέτρων -->
+        <div class="param-section">
+          <label for="analysisType">Τύπος Ανάλυσης:</label>
+          <select id="analysisType" onchange="updateChart(); updateLabel();">
+            <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
+            <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
+            <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
+            <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
           </select>
+          
+          <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
+          <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
+          
+          <label for="concBase">Συγκέντρωση Βάσης (M):</label>
+          <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
+          
+          <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
+          <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
+          
+          <label for="pKa" id="pKaLabel">pKa:</label>
+          <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
+          
+          <label for="stepSize">Βήμα προσθήκης (mL):</label>
+          <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
+          
+          <button onclick="resetValues()">Επαναφορά</button>
         </div>
-      </div>
-      
-      <div>
-        <label for="analysisType">Τύπος Ανάλυσης:</label>
-        <select id="analysisType" onchange="updateChart(); updateLabel();">
-          <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
-          <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-          <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
-          <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
-        </select>
-        <br><br>
-        <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
-        <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
-        <br>
-        <label for="concBase">Συγκέντρωση Βάσης (M):</label>
-        <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
-        <br>
-        <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
-        <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
-        <br>
-        <label for="pKa" id="pKaLabel">pKa:</label>
-        <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
-        <br><br>
-        <label for="stepSize">Βήμα προσθήκης (mL):</label>
-        <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
-        <br><br>
-        <button onclick="resetValues()">Επαναφορά</button>
       </div>
     </div>
   </div>
@@ -156,7 +141,7 @@
       label.textContent = (type === "strong_acid_weak_base") ? "pKb:" : "pKa:";
     }
 
-    // Η resetValues εξασφαλίζει πως το ποτήρι ξεκινάει κενό (0% γέμισμα)
+    // Επαναφορά τιμών και αρχική εμφάνιση (το ποτήρι ξεκινάει κενό)
     function resetValues() {
       document.getElementById('concAcid').value = 0.1;
       document.getElementById('concBase').value = 0.1;
@@ -306,8 +291,7 @@
         }
       });
       
-      // Ενημέρωση του ποτηριού ώστε το ύψος του γεμίσματος να αντανακλά την προσθήκη αντιδραστηρίου.
-      // Εδώ, αν δεν έχει προστεθεί ακόμα αντιδραστήριο, το ποτήρι παραμένει άδειο.
+      // Ενημέρωση του ποτηριού βάσει της προσθήκης αντιδραστηρίου
       const latestVolume = data.volumes[data.volumes.length - 1];
       let fillPercent = Math.min((latestVolume / 100) * 100, 100);
       updateGlassFill(fillPercent);
