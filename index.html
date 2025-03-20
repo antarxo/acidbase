@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση - Κουμπί με Ετικέτα & Ολοκληρωμένη Σκιά</title>
+  <title>Προσομοίωση - Rescaling & Ευθυγράμμιση</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -26,7 +26,7 @@
   <script>
     let pipetteImg, breakerImg;
     
-    // Αύξηση της τιμής του beakerFill κατά 3 (που μεταφράζεται σε ορατό ύψος 75% αυτής της τιμής)
+    // Η μεταβλητή beakerFill αυξάνεται κατά 3 κάθε φορά (αυτός ο αριθμός "αθροίζεται")
     let beakerFill = 0;
     let dropY;
     let dropActive = false;
@@ -38,12 +38,13 @@
     let pipetScaledW, pipetScaledH;
     let breakerScaledW, breakerScaledH;
     
+    // Οι θέσεις για τις εικόνες – ευθυγράμμιση στη δεξιά πλευρά
     let pipetX, pipetY;
     let breakerX, breakerY;
     
     let initialDropY;
     
-    // Ρυθμίσεις για το εικονικό κουμπί πάνω στην pipet
+    // Ρυθμίσεις για το κόκκινο κουμπί
     let buttonRadius = 15;
     let buttonCenterX, buttonCenterY;
     
@@ -53,32 +54,34 @@
     }
     
     function setup() {
+      // Υπολογισμός διαστάσεων με scale factor
       pipetScaledW = pipetteImg.width * scaleFactorImages;
       pipetScaledH = pipetteImg.height * scaleFactorImages;
       breakerScaledW = breakerImg.width * scaleFactorImages;
       breakerScaledH = breakerImg.height * scaleFactorImages;
       
-      let canvasWidth = breakerScaledW;
+      // Ορίζουμε το canvas με πλάτος το μεγαλύτερο από τις δύο εικόνες ώστε να στοιχίζονται στη δεξιά πλευρά
+      let canvasWidth = max(pipetScaledW, breakerScaledW);
       let canvasHeight = pipetScaledH + breakerScaledH;
       createCanvas(canvasWidth, canvasHeight).parent("canvas-container");
       
-      pipetX = (width - pipetScaledW) / 2;
+      // Τοποθετούμε τις εικόνες ώστε η δεξιά τους άκρη να είναι στο ίδιο σημείο:
+      pipetX = canvasWidth - pipetScaledW;
       pipetY = 0;
+      
+      breakerX = canvasWidth - breakerScaledW;
+      // Το breaker τοποθετούμε κάτω από το pipet
+      breakerY = pipetScaledH;
       
       let pipetBottom = pipetY + pipetScaledH;
       initialDropY = pipetBottom;
-      
-      breakerX = (width - breakerScaledW) / 2;
-      breakerY = pipetBottom;
-      
       dropY = initialDropY;
       
-      // Ορισμός θέσης του εικονικού κουμπιού:
-      // Προηγούμενη θέση: pipetX + pipetScaledW - buttonRadius - 5, μετατοπισμένη αριστερότερα κατά 8 pixels
+      // Ορίζουμε το κόκκινο κουμπί σχετικά με την pipet – μετατοπισμένο αριστερότερα κατά 8 pixels
       buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5 - 8;
-      // Προηγούμενη θέση Y: pipetY + buttonRadius + 5 + 15
       buttonCenterY = pipetY + buttonRadius + 5 + 15;
       
+      // Δημιουργούμε το κουμπί "Επαναφορά" για επαναφορά της προσομοίωσης
       createButton("Επαναφορά").parent("controls").mousePressed(resetFill);
       
       textFont('Arial');
@@ -89,45 +92,48 @@
     function draw() {
       background(240);
       
-      // Ορισμός της βάσης του ποτηριού (breaker)
+      // Ορίζουμε το "ποτήρι" με βάση την εικόνα breaker.
+      // containerBottom: κάτω σημείο του ποτηριού (με offset 20 pixels πάνω από το κάτω μέρος της εικόνας)
       let containerBottom = breakerY + breakerScaledH - 20;
+      // Το μέγιστο ορατό ύψος του υγρού ορίζεται στο 65% του ύψους του breaker
+      let maxLiquidHeight = breakerScaledH * 0.65;
+      let containerTop = containerBottom - maxLiquidHeight;
       
-      // Το ορατό ύψος του υγρού είναι το 75% της τιμής του beakerFill
-      let drawnLiquidHeight = beakerFill * 0.75;
-      let topLiquidY = containerBottom - drawnLiquidHeight;
+      // Το ορατό ύψος του υγρού είναι το ελάχιστο μεταξύ της συσσωρευμένης τιμής και του maxLiquidHeight
+      let drawnLiquidHeight = min(beakerFill, maxLiquidHeight);
       
-      // Ορισμός πλάτους και θέσης του υγρού
+      // Ορισμός πλάτους και θέσης του υγρού μέσα στο ποτήρι
       let liquidWidth = breakerScaledW * 0.7 - 9;
       let liquidX = (breakerX + (breakerScaledW - liquidWidth) / 2) - 13;
       
-      // --- Z-index 70: Κάτω έλλειψη ---
+      // --- Z-index 70: Κάτω έλλειψη (βάση του υγρού) ---
       if (showBaseEllipse) {
         noStroke();
-        fill(234, 234, 234); // Χρώμα #EAEAEA
+        fill(234, 234, 234); // #EAEAEA
         ellipseMode(CENTER);
         ellipse(liquidX + liquidWidth / 2, containerBottom, liquidWidth, liquidWidth * 0.3);
       }
       
-      // --- Z-index 80: Ορθογώνιο του περιεχομένου ---
+      // --- Z-index 80: Ορθογώνιο του περιεχομένου (υγρό) ---
       noStroke();
       fill(234, 234, 234);
-      rect(liquidX, topLiquidY, liquidWidth, drawnLiquidHeight);
+      rect(liquidX, containerBottom - drawnLiquidHeight, liquidWidth, drawnLiquidHeight);
       
-      // --- Z-index 90: Πάνω έλλειψη με περίγραμμα ---
+      // --- Z-index 90: Πάνω έλλειψη (γραμμή πάνω του υγρού) ---
       stroke(180);
       strokeWeight(1);
       fill(234, 234, 234);
       ellipseMode(CENTER);
-      ellipse(liquidX + liquidWidth / 2, topLiquidY, liquidWidth, liquidWidth * 0.3);
+      ellipse(liquidX + liquidWidth / 2, containerBottom - drawnLiquidHeight, liquidWidth, liquidWidth * 0.3);
       noStroke();
       
-      // --- Z-index 100: Ποτήρι, pipet, drop και εικονικό κουμπί ---
+      // --- Z-index 100: Το ποτήρι (breaker), η pipet, η σταγόνα και το κόκκινο κουμπί ---
       
-      // Σχεδίαση του ποτηριού (breaker)
+      // Σχεδίαση του breaker (ποτηριού)
       imageMode(CORNER);
       image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       
-      // Κίνηση της σταγόνας (αν ενεργοποιημένη) και σχεδίαση της
+      // Σχεδίαση και κίνηση της σταγόνας
       if (dropActive) {
         drawDrop();
         dropY += dropSpeed;
@@ -139,12 +145,12 @@
         }
       }
       
-      // Σχεδίαση της pipet
+      // Σχεδίαση του pipet
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
-      // --- Σχεδίαση του εικονικού κουμπιού (κόκκινο κουμπί με ετικέτα "Πάτα!" και πλήρη σκιά) ---
+      // Σχεδίαση του κόκκινου κουμπιού με πλήρη σκιά και ετικέτα "Πάτα!"
       push();
-      // Ορισμός σκιώδους εφέ: η σκιά να προβάλλεται ομοιόμορφα από όλες τις πλευρές
+      // Ρυθμίσεις σκιάς: από όλες τις πλευρές (offset 0, ομοιόμορφη σκιά)
       drawingContext.shadowOffsetX = 0;
       drawingContext.shadowOffsetY = 0;
       drawingContext.shadowBlur = 8;
@@ -182,7 +188,7 @@
       showBaseEllipse = false;
     }
     
-    // Έλεγχος αν το κλικ έγινε εντός του εικονικού κουμπιού
+    // Έλεγχος αν το κλικ έγινε εντός του κόκκινου κουμπιού
     function mousePressed() {
       if (dist(mouseX, mouseY, buttonCenterX, buttonCenterY) < buttonRadius) {
         startDrop();
