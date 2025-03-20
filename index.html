@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση - Z-index Layers</title>
+  <title>Προσομοίωση - Κουμπί με Ετικέτα & Ολοκληρωμένη Σκιά</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -74,11 +74,16 @@
       dropY = initialDropY;
       
       // Ορισμός θέσης του εικονικού κουμπιού:
-      // Με μετατόπιση 15 pixels προς τα κάτω (προσθέτουμε στο Y)
-      buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5;
+      // Προηγούμενη θέση: pipetX + pipetScaledW - buttonRadius - 5, μετατοπισμένη αριστερότερα κατά 8 pixels
+      buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5 - 8;
+      // Προηγούμενη θέση Y: pipetY + buttonRadius + 5 + 15
       buttonCenterY = pipetY + buttonRadius + 5 + 15;
       
       createButton("Επαναφορά").parent("controls").mousePressed(resetFill);
+      
+      textFont('Arial');
+      textSize(10);
+      textAlign(CENTER, CENTER);
     }
     
     function draw() {
@@ -137,14 +142,23 @@
       // Σχεδίαση της pipet
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
-      // Σχεδίαση του εικονικού κουμπιού με εφέ 3D (σκιά + κύριο κουμπί)
+      // --- Σχεδίαση του εικονικού κουμπιού (κόκκινο κουμπί με ετικέτα "Πάτα!" και πλήρη σκιά) ---
+      push();
+      // Ορισμός σκιώδους εφέ: η σκιά να προβάλλεται ομοιόμορφα από όλες τις πλευρές
+      drawingContext.shadowOffsetX = 0;
+      drawingContext.shadowOffsetY = 0;
+      drawingContext.shadowBlur = 8;
+      drawingContext.shadowColor = "rgba(0, 0, 0, 0.5)";
+      
       noStroke();
-      // Σκιά (3 pixels μετατόπιση)
-      fill(50, 50, 50, 100);
-      ellipse(buttonCenterX + 3, buttonCenterY + 3, buttonRadius * 2, buttonRadius * 2);
-      // Κύριο κουμπί (κόκκινο)
       fill(255, 0, 0);
       ellipse(buttonCenterX, buttonCenterY, buttonRadius * 2, buttonRadius * 2);
+      
+      // Απενεργοποίηση της σκιάς για το κείμενο
+      drawingContext.shadowBlur = 0;
+      fill(255);
+      text("Πάτα!", buttonCenterX, buttonCenterY);
+      pop();
     }
     
     function drawDrop() {
