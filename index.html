@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση με pipet3 & breaker3 (50% & Z-index & Canvas Fit)</title>
+  <title>Προσομοίωση με pipet3 & breaker3 (50% & Dynamic Liquid)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
@@ -29,9 +29,9 @@
     let initialDropY;
     
     // Πλάτος περιεχομένου του ποτηριού = 0.7 * το πλάτος του breaker
-    let liquidWidth;
+    let liquidWidth, liquidHeight;
     
-    // Ορισμός offset για να μετακινηθεί το υγρό και η σταγόνα αριστερότερα
+    // Offset για μετατόπιση προς τα αριστερά (σταγόνα & υγρό)
     let shiftOffset = 20;
     
     function preload() {
@@ -68,9 +68,10 @@
       breakerX = width - breakerScaledW;
       breakerY = pipetBottom;
       
-      // Υπολογισμός του πλάτους του υγρού
+      // Υπολογισμός του πλάτους & ύψους του υγρού
       liquidWidth = breakerScaledW * 0.7;
-      
+      liquidHeight = liquidWidth * 0.3; // Η αναλογία του ύψους της έλλειψης είναι 30% του πλάτους
+
       dropY = initialDropY;
       
       // Δημιουργία κουμπιών
@@ -90,19 +91,19 @@
       let containerTop = breakerY + 30;
       let containerBottom = breakerY + breakerScaledH - 20;
       let maxLiquidHeight = containerBottom - containerTop;
-      let liquidHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
-      let topLiquidY = containerBottom - liquidHeight;
+      let liquidFillHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
+      let topLiquidY = containerBottom - liquidFillHeight;
       let liquidX = breakerX + breakerScaledW - liquidWidth - shiftOffset;
       
       // 1. Σχεδίαση του υγρού (πίσω από το ποτήρι)
       noStroke();
       fill(30, 136, 229);
       rectMode(CORNER);
-      rect(liquidX, topLiquidY, liquidWidth, liquidHeight);
+      rect(liquidX, topLiquidY, liquidWidth, liquidFillHeight);
       
       ellipseMode(CENTER);
-      ellipse(liquidX + liquidWidth/2, topLiquidY, liquidWidth, 15);
-      ellipse(liquidX + liquidWidth/2, containerBottom, liquidWidth, 15);
+      ellipse(liquidX + liquidWidth/2, topLiquidY, liquidWidth, liquidHeight);
+      ellipse(liquidX + liquidWidth/2, containerBottom, liquidWidth, liquidHeight);
       
       // 2. Σχεδίαση του ποτηριού (πάνω από το υγρό)
       imageMode(CORNER);
@@ -115,7 +116,7 @@
       if(dropActive) {
         drawDrop();
         dropY += dropSpeed;
-        if(dropY > containerBottom - 7.5) {
+        if(dropY > containerBottom - liquidHeight / 2) {
           dropActive = false;
           dropY = initialDropY;
           beakerFill = min(beakerFill + 10, 100);
