@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση με pipet3 & breaker3 (Updated Ellipse & Position)</title>
+  <title>Προσομοίωση με pipet3 & breaker3 (Z-index & Position Adjustments)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -16,6 +16,7 @@
     }
     canvas {
       display: block;
+      z-index: -20; /* Όλο το περιεχόμενο σε χαμηλότερο επίπεδο */
     }
     .controls {
       margin-top: 20px;
@@ -30,7 +31,7 @@
     let dropY;
     let dropActive = false;
     let dropSpeed = 5;
-    let showBaseEllipse = false; // Η σταθερή έλλειψη δεν φαίνεται αρχικά
+    let showBaseEllipse = false; 
     
     let scaleFactorImages = 0.5;
 
@@ -69,7 +70,7 @@
       breakerX = (width - breakerScaledW) / 2;
       breakerY = pipetBottom;
       
-      liquidWidth = breakerScaledW * 0.7 - 8;
+      liquidWidth = breakerScaledW * 0.7 - 9; // Μειώθηκε κατά 1 pixel
       liquidHeight = liquidWidth * 0.3;
       
       dropY = initialDropY;
@@ -87,7 +88,7 @@
       let liquidFillHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
       let topLiquidY = containerBottom - liquidFillHeight;
       
-      let liquidX = breakerX + (breakerScaledW - liquidWidth) / 2 - 14; // Όλο το περιεχόμενο πήγε 10 αριστερότερα
+      let liquidX = breakerX + (breakerScaledW - liquidWidth) / 2 - 13; // Όλο το περιεχόμενο μετακινήθηκε δεξιότερα κατά 1 pixel
       
       // 1. Σχεδίαση του ορθογωνίου υγρού
       noStroke();
