@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>p5.js: Ρεαλιστική Προσομοίωση με τις δικές σου εικόνες</title>
+  <!-- Φόρτωση του p5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
@@ -15,17 +16,122 @@
     let dropY;               // τρέχουσα θέση της σταγόνας
     let dropActive = false;  // αν η σταγόνα κινείται
     let dropSpeed = 5;       // ταχύτητα της σταγόνας
-    
+
     function preload() {
-      // Φόρτωση των εικόνων (προσαρμόστε τα ονόματα αρχείων ανάλογα με τις δικές σας εικόνες)
-      pipetteImg = loadImage('pipet2.png');  
-      beakerImg = loadImage('beaker2.png'); 
+      console.log("Loading images...");
+      // Φόρτωση των εικόνων
+      pipetteImg = loadImage('pipet2.png', () => {
+        console.log("pipet2.png loaded successfully");
+      }, () => {
+        console.error("Error loading pipet2.png");
+      });
+      
+      beakerImg = loadImage('beaker2.png', () => {
+        console.log("beaker2.png loaded successfully");
+      }, () => {
+        console.error("Error loading beaker2.png");
+      });
     }
     
     function setup() {
       createCanvas(400, 600);
+      console.log("Setup executed, canvas created");
       
-      // Αρχικοποίηση της θέσης της σταγόνας, ξεκινάει πάνω από το ποτήρι
+      // Αρχικοποίηση της θέσης της σταγόνας
       dropY = 100;
       
-      // Δημιουργούμε δύο κουμπιά για να δοκιμάσουμε την αλληλεπίδρα
+      // Δημιουργία κουμπιών για δοκιμή της αλληλεπίδρασης
+      let btnFill = createButton("Προσθήκη Αντιδραστηρίου");
+      btnFill.position(10, height + 20);
+      btnFill.mousePressed(startDrop);
+      
+      let btnReset = createButton("Επαναφορά");
+      btnReset.position(200, height + 20);
+      btnReset.mousePressed(resetFill);
+    }
+    
+    function draw() {
+      background(240);
+      
+      // Σχεδίαση της πιπέτας
+      imageMode(CENTER);
+      // Ελέγχουμε αν έχει φορτωθεί η εικόνα πριν την σχεδιάσουμε
+      if(pipetteImg) {
+        image(pipetteImg, width / 2 - 60, 120, 80, 150);
+      } else {
+        // Αν δεν έχει φορτωθεί, σχεδιάζουμε ένα placeholder
+        fill(200);
+        rect(width / 2 - 100, 60, 80, 150);
+        console.error("pipetteImg is not loaded");
+      }
+      
+      // Σχεδίαση του ποτηριού
+      imageMode(CENTER);
+      if(beakerImg) {
+        image(beakerImg, width / 2, 350, 150, 250);
+      } else {
+        fill(255);
+        rect(width / 2, 350, 150, 250);
+        console.error("beakerImg is not loaded");
+      }
+      
+      // Σχεδίαση του "γέμισματος" μέσα στο ποτήρι
+      drawBeakerFill();
+      
+      // Αν η σταγόνα είναι ενεργή, σχεδιάζουμε και την κίνησή της
+      if (dropActive) {
+        drawDrop();
+        dropY += dropSpeed;
+        
+        // Όταν η σταγόνα φτάσει στο ποτήρι, σταματάμε το animation και αυξάνουμε το γέμισμα
+        if (dropY > 320) {
+          dropActive = false;
+          dropY = 100; // επαναφορά της θέσης της σταγόνας
+          beakerFill = min(beakerFill + 10, 100);
+          console.log("Incremented beakerFill to:", beakerFill);
+        }
+      }
+    }
+    
+    // Συνάρτηση για να σχεδιάσουμε το "γέμισμα" του ποτηριού
+    function drawBeakerFill() {
+      // Υπολογισμός του ύψους του γεμίσματος βάσει του beakerFill
+      let fillHeight = map(beakerFill, 0, 100, 0, 200);
+      
+      push();
+      translate(width / 2, 350);
+      noStroke();
+      fill(30, 136, 229, 180);
+      rectMode(CENTER);
+      // Σχεδιάζουμε ένα ορθογώνιο γεμίσματος περίπου μέσα στο ποτήρι
+      rect(0, 100 - fillHeight / 2, 140, fillHeight);
+      pop();
+    }
+    
+    // Συνάρτηση για να σχεδιάσουμε τη σταγόνα (χρησιμοποιούμε απλό ελλειψάκι)
+    function drawDrop() {
+      push();
+      fill(30, 136, 229);
+      noStroke();
+      ellipse(width / 2 - 60, dropY, 10, 15);
+      pop();
+    }
+    
+    // Όταν πατήσουμε το κουμπί "Προσθήκη Αντιδραστηρίου"
+    function startDrop() {
+      if (!dropActive) {
+        dropActive = true;
+        console.log("Drop started");
+      }
+    }
+    
+    // Όταν πατήσουμε το κουμπί "Επαναφορά"
+    function resetFill() {
+      beakerFill = 0;
+      dropY = 100;
+      dropActive = false;
+      console.log("Reset executed");
+    }
+  </script>
+</body>
+</html>
