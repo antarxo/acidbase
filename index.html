@@ -2,19 +2,23 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση με pipet3 & breaker3 (Adjusted Ellipse)</title>
+  <title>Προσομοίωση με pipet3 & breaker3 (Hidden Base Ellipse & Adjusted Position)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
       height: 100vh;
       margin: 0;
       background-color: #f0f0f0;
     }
     canvas {
       display: block;
+    }
+    .controls {
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -26,22 +30,18 @@
     let dropY;
     let dropActive = false;
     let dropSpeed = 5;
+    let showBaseEllipse = false; // Η σταθερή έλλειψη δεν φαίνεται αρχικά
     
-    // Κλίμακα εικόνων 50%
     let scaleFactorImages = 0.5;
 
-    // Διαστάσεις εικόνων μετά το scaling
     let pipetScaledW, pipetScaledH;
     let breakerScaledW, breakerScaledH;
     
-    // Θέσεις
     let pipetX, pipetY;
     let breakerX, breakerY;
     
-    // Αρχική θέση της σταγόνας
     let initialDropY;
     
-    // Πλάτος περιεχομένου του ποτηριού = 0.7 * το πλάτος του breaker
     let liquidWidth, liquidHeight;
     
     function preload() {
@@ -58,8 +58,7 @@
       let canvasWidth = breakerScaledW;
       let canvasHeight = pipetScaledH + breakerScaledH;
       
-      let canvas = createCanvas(canvasWidth, canvasHeight);
-      canvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
+      createCanvas(canvasWidth, canvasHeight).parent("canvas-container");
       
       pipetX = (width - pipetScaledW) / 2;  
       pipetY = 0;
@@ -70,10 +69,13 @@
       breakerX = (width - breakerScaledW) / 2;
       breakerY = pipetBottom;
       
-      liquidWidth = breakerScaledW * 0.7 - 8; // Μειώνουμε κατά 8 pixels
-      liquidHeight = liquidWidth * 0.3; 
+      liquidWidth = breakerScaledW * 0.7 - 8;
+      liquidHeight = liquidWidth * 0.3;
       
       dropY = initialDropY;
+      
+      createButton("Προσθήκη Αντιδραστηρίου").parent("controls").mousePressed(startDrop);
+      createButton("Επαναφορά").parent("controls").mousePressed(resetFill);
     }
     
     function draw() {
@@ -85,9 +87,8 @@
       let liquidFillHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
       let topLiquidY = containerBottom - liquidFillHeight;
       
-      let liquidX = breakerX + (breakerScaledW - liquidWidth) / 2 - 10; // Μετακινούμε 10 pixels αριστερά
+      let liquidX = breakerX + (breakerScaledW - liquidWidth) / 2 - 4; // Μετακινήθηκε 4 pixels αριστερά
       
-      // 1. Σχεδίαση του υγρού (πίσω από το ποτήρι)
       noStroke();
       fill(30, 136, 229);
       rectMode(CORNER);
@@ -95,16 +96,16 @@
       
       ellipseMode(CENTER);
       ellipse(liquidX + liquidWidth/2, topLiquidY, liquidWidth, liquidHeight);
-      ellipse(liquidX + liquidWidth/2, containerBottom, liquidWidth, liquidHeight);
       
-      // 2. Σχεδίαση του ποτηριού (πάνω από το υγρό)
+      if (showBaseEllipse) {
+        ellipse(liquidX + liquidWidth/2, containerBottom, liquidWidth, liquidHeight);
+      }
+      
       imageMode(CORNER);
       image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       
-      // 3. Σχεδίαση του pipet3 (πάνω από το ποτήρι)
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
-      // 4. Σχεδίαση και κίνηση της σταγόνας
       if(dropActive) {
         drawDrop();
         dropY += dropSpeed;
@@ -112,6 +113,7 @@
           dropActive = false;
           dropY = initialDropY;
           beakerFill = min(beakerFill + 10, 100);
+          showBaseEllipse = true; // Με την πρώτη σταγόνα εμφανίζεται η σταθερή έλλειψη
         }
       }
     }
@@ -134,14 +136,12 @@
       beakerFill = 0;
       dropY = initialDropY;
       dropActive = false;
-    }
-    
-    function windowResized() {
-      let canvasX = (windowWidth - width) / 2;
-      let canvasY = (windowHeight - height) / 2;
-      resizeCanvas(width, height);
-      select('canvas').position(canvasX, canvasY);
+      showBaseEllipse = false; // Απόκρυψη της σταθερής έλλειψης στην επαναφορά
     }
   </script>
+
+  <div id="canvas-container"></div>
+  <div id="controls" class="controls"></div>
+
 </body>
 </html>
