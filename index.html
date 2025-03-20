@@ -2,8 +2,21 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση με pipet3 & breaker3 (50% & Dynamic Liquid)</title>
+  <title>Προσομοίωση με pipet3 & breaker3 (Centered Canvas)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;  /* Κεντράρει οριζόντια */
+      align-items: center;  /* Κεντράρει κάθετα */
+      height: 100vh;  /* Πλήρες ύψος οθόνης */
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
 </head>
 <body>
   <script>
@@ -21,7 +34,7 @@
     let pipetScaledW, pipetScaledH;
     let breakerScaledW, breakerScaledH;
     
-    // Θέσεις και margins
+    // Θέσεις
     let pipetX, pipetY;
     let breakerX, breakerY;
     
@@ -46,31 +59,35 @@
     }
     
     function setup() {
-      // Ορισμός διαστάσεων του καμβά δυναμικά βάσει των εικόνων
-      createCanvas(pipetteImg.width * scaleFactorImages, 
-                   (pipetteImg.height + breakerImg.height) * scaleFactorImages);
+      // Ορισμός διαστάσεων του καμβά
+      let canvasWidth = pipetteImg.width * scaleFactorImages;
+      let canvasHeight = (pipetteImg.height + breakerImg.height) * scaleFactorImages;
+      let canvas = createCanvas(canvasWidth, canvasHeight);
       
-      // Υπολογισμός των διαστάσεων των εικόνων με το scaling
+      // Κεντράρει τον καμβά στη σελίδα
+      canvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
+      
+      // Υπολογισμός διαστάσεων εικόνων με scaling
       pipetScaledW = pipetteImg.width * scaleFactorImages;
       pipetScaledH = pipetteImg.height * scaleFactorImages;
       breakerScaledW = breakerImg.width * scaleFactorImages;
       breakerScaledH = breakerImg.height * scaleFactorImages;
       
-      // Τοποθέτηση pipet3 στην κορυφή του καμβά
-      pipetX = width - pipetScaledW;  
+      // Τοποθέτηση pipet3
+      pipetX = (width - pipetScaledW) / 2;  
       pipetY = 0;
       
       // Το κάτω άκρο του pipet3 συμπίπτει με το πάνω άκρο του breaker3
       let pipetBottom = pipetY + pipetScaledH;
       initialDropY = pipetBottom;
       
-      // Τοποθέτηση breaker3 κάτω από το pipet3
-      breakerX = width - breakerScaledW;
+      // Τοποθέτηση breaker3
+      breakerX = (width - breakerScaledW) / 2;
       breakerY = pipetBottom;
       
       // Υπολογισμός του πλάτους & ύψους του υγρού
       liquidWidth = breakerScaledW * 0.7;
-      liquidHeight = liquidWidth * 0.3; // Η αναλογία του ύψους της έλλειψης είναι 30% του πλάτους
+      liquidHeight = liquidWidth * 0.3; 
 
       dropY = initialDropY;
       
@@ -93,7 +110,7 @@
       let maxLiquidHeight = containerBottom - containerTop;
       let liquidFillHeight = map(beakerFill, 0, 100, 0, maxLiquidHeight);
       let topLiquidY = containerBottom - liquidFillHeight;
-      let liquidX = breakerX + breakerScaledW - liquidWidth - shiftOffset;
+      let liquidX = breakerX + (breakerScaledW - liquidWidth) / 2;
       
       // 1. Σχεδίαση του υγρού (πίσω από το ποτήρι)
       noStroke();
@@ -112,7 +129,7 @@
       // 3. Σχεδίαση του pipet3 (πάνω από το ποτήρι)
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
-      // 4. Σχεδίαση και κίνηση της σταγόνας (μετατοπισμένη αριστερότερα)
+      // 4. Σχεδίαση και κίνηση της σταγόνας
       if(dropActive) {
         drawDrop();
         dropY += dropSpeed;
@@ -128,7 +145,7 @@
       push();
       fill(30, 136, 229);
       noStroke();
-      ellipse(pipetX + pipetScaledW - shiftOffset, dropY, 10, 15);
+      ellipse(pipetX + pipetScaledW / 2, dropY, 10, 15);
       pop();
     }
     
@@ -142,6 +159,14 @@
       beakerFill = 0;
       dropY = initialDropY;
       dropActive = false;
+    }
+    
+    function windowResized() {
+      // Επανατοποθέτηση του καμβά στο κέντρο όταν αλλάζει το μέγεθος του παραθύρου
+      let canvasX = (windowWidth - width) / 2;
+      let canvasY = (windowHeight - height) / 2;
+      resizeCanvas(width, height);
+      select('canvas').position(canvasX, canvasY);
     }
   </script>
 </body>
