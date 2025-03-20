@@ -1,81 +1,31 @@
 <!DOCTYPE html>
 <html lang="el">
-  <head>
-    <meta charset="UTF-8">
-    <title>p5.js Προσομοίωση Ογκομέτρησης</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-  </head>
-  <body>
-    <script>
-      // Μεταβλητή για το ποσοστό γέμισματος του ποτηριού (0 έως 100)
-      let fillLevel = 0;
-      // Μεταβλητή για την περιστροφή του κεφαλιού της προχοΐδας
-      let dropperAngle = 0;
-      // Βήμα προσθήκης (αύξηση ποσοστού γέμισματος)
-      let fillIncrement = 1;
+<head>
+  <meta charset="UTF-8">
+  <title>p5.js: Ρεαλιστική Προσομοίωση με τις δικές σου εικόνες</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+  <script>
+    // Μεταβλητές για τις εικόνες
+    let pipetteImg, beakerImg;
+    
+    // Μεταβλητές για το animation
+    let beakerFill = 0;      // ποσοστό γέμισματος του ποτηριού (0-100)
+    let dropY;               // τρέχουσα θέση της σταγόνας
+    let dropActive = false;  // αν η σταγόνα κινείται
+    let dropSpeed = 5;       // ταχύτητα της σταγόνας
+    
+    function preload() {
+      // Φόρτωση των εικόνων (προσαρμόστε τα ονόματα αρχείων ανάλογα με τις δικές σας εικόνες)
+      pipetteImg = loadImage('pipet2.png');  
+      beakerImg = loadImage('beaker2.png'); 
+    }
+    
+    function setup() {
+      createCanvas(400, 600);
       
-      function setup() {
-        createCanvas(400, 600);
-        
-        // Δημιουργία κουμπιού για προσθήκη αντιδραστηρίου
-        let btnFill = createButton("Προσθήκη Αντιδραστηρίου");
-        btnFill.position(10, height + 20);
-        btnFill.mousePressed(increaseFill);
-        
-        // Δημιουργία κουμπιού για επαναφορά του ποτηριού
-        let btnReset = createButton("Επαναφορά");
-        btnReset.position(200, height + 20);
-        btnReset.mousePressed(resetFill);
-      }
+      // Αρχικοποίηση της θέσης της σταγόνας, ξεκινάει πάνω από το ποτήρι
+      dropY = 100;
       
-      function draw() {
-        background(220);
-        
-        // Σχεδίαση της προχοΐδας (κύλινδρος με περιστρεφόμενο κεφάλι) πάνω από το ποτήρι
-        push();
-          translate(width / 2, 100);
-          // Σώμα προχοΐδας (αντιπροσωπεύεται ως ορθογώνιο με στρογγυλεμένες γωνίες)
-          fill(180);
-          rectMode(CENTER);
-          rect(0, 30, 40, 100, 10);
-          // Κεφάλι προχοΐδας (περιστρέφεται)
-          push();
-            translate(0, -20);
-            rotate(radians(dropperAngle));
-            fill(200);
-            ellipse(0, 0, 40, 40);
-          pop();
-        pop();
-        
-        // Σχεδίαση του ποτηριού (αντιπροσωπεύεται ως ορθογώνιο με στρογγυλεμένες γωνίες)
-        push();
-          translate(width / 2, 300);
-          stroke(0);
-          fill(255);
-          rectMode(CENTER);
-          rect(0, 0, 100, 200, 10);
-          // Γέμισμα του ποτηριού (με μπλε απόχρωση)
-          noStroke();
-          fill(30, 136, 229, 150);
-          let fillHeight = map(fillLevel, 0, 100, 0, 200);
-          rectMode(CORNER);
-          rect(-50, 100 - fillHeight, 100, fillHeight);
-        pop();
-        
-        // Ενημέρωση του dropper για animation
-        dropperAngle = (dropperAngle + 2) % 360;
-      }
-      
-      // Συνάρτηση για αύξηση του ποσοστού γέμισματος (με βάση το fillIncrement)
-      function increaseFill() {
-        fillLevel += fillIncrement;
-        if (fillLevel > 100) fillLevel = 100;
-      }
-      
-      // Συνάρτηση για επαναφορά του ποτηριού (προκαθορισμένο fillLevel = 0)
-      function resetFill() {
-        fillLevel = 0;
-      }
-    </script>
-  </body>
-</html>
+      // Δημιουργούμε δύο κουμπιά για να δοκιμάσουμε την αλληλεπίδρα
