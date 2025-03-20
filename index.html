@@ -2,14 +2,14 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση με pipet3 & breaker3 (Centered Canvas)</title>
+  <title>Προσομοίωση με pipet3 & breaker3 (Correct Canvas Size)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
       display: flex;
-      justify-content: center;  /* Κεντράρει οριζόντια */
-      align-items: center;  /* Κεντράρει κάθετα */
-      height: 100vh;  /* Πλήρες ύψος οθόνης */
+      justify-content: center; /* Κεντράρει οριζόντια */
+      align-items: center; /* Κεντράρει κάθετα */
+      height: 100vh; /* Πλήρες ύψος */
       margin: 0;
       background-color: #f0f0f0;
     }
@@ -22,7 +22,7 @@
   <script>
     let pipetteImg, breakerImg;
     
-    let beakerFill = 0; // Ποσοστό γεμίσματος
+    let beakerFill = 0;
     let dropY;
     let dropActive = false;
     let dropSpeed = 5;
@@ -44,34 +44,24 @@
     // Πλάτος περιεχομένου του ποτηριού = 0.7 * το πλάτος του breaker
     let liquidWidth, liquidHeight;
     
-    // Offset για μετατόπιση προς τα αριστερά (σταγόνα & υγρό)
-    let shiftOffset = 20;
-    
     function preload() {
-      pipetteImg = loadImage('pipet3.png', 
-        () => console.log("pipet3.png loaded successfully"),
-        () => console.error("Error loading pipet3.png")
-      );
-      breakerImg = loadImage('breaker3.png', 
-        () => console.log("breaker3.png loaded successfully"),
-        () => console.error("Error loading breaker3.png")
-      );
+      pipetteImg = loadImage('pipet3.png');
+      breakerImg = loadImage('breaker3.png');
     }
     
     function setup() {
-      // Ορισμός διαστάσεων του καμβά
-      let canvasWidth = pipetteImg.width * scaleFactorImages;
-      let canvasHeight = (pipetteImg.height + breakerImg.height) * scaleFactorImages;
-      let canvas = createCanvas(canvasWidth, canvasHeight);
-      
-      // Κεντράρει τον καμβά στη σελίδα
-      canvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
-      
-      // Υπολογισμός διαστάσεων εικόνων με scaling
+      // Υπολογισμός των διαστάσεων των εικόνων με το scaling
       pipetScaledW = pipetteImg.width * scaleFactorImages;
       pipetScaledH = pipetteImg.height * scaleFactorImages;
       breakerScaledW = breakerImg.width * scaleFactorImages;
       breakerScaledH = breakerImg.height * scaleFactorImages;
+      
+      // Καθορισμός του πλάτους και ύψους του καμβά
+      let canvasWidth = breakerScaledW;
+      let canvasHeight = pipetScaledH + breakerScaledH;
+      
+      let canvas = createCanvas(canvasWidth, canvasHeight);
+      canvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
       
       // Τοποθέτηση pipet3
       pipetX = (width - pipetScaledW) / 2;  
@@ -90,15 +80,6 @@
       liquidHeight = liquidWidth * 0.3; 
 
       dropY = initialDropY;
-      
-      // Δημιουργία κουμπιών
-      let btnFill = createButton("Προσθήκη Αντιδραστηρίου");
-      btnFill.position(10, height + 20);
-      btnFill.mousePressed(startDrop);
-      
-      let btnReset = createButton("Επαναφορά");
-      btnReset.position(200, height + 20);
-      btnReset.mousePressed(resetFill);
     }
     
     function draw() {
@@ -162,7 +143,6 @@
     }
     
     function windowResized() {
-      // Επανατοποθέτηση του καμβά στο κέντρο όταν αλλάζει το μέγεθος του παραθύρου
       let canvasX = (windowWidth - width) / 2;
       let canvasY = (windowHeight - height) / 2;
       resizeCanvas(width, height);
