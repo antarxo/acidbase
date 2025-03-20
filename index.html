@@ -82,30 +82,21 @@
       const epsilon = 1e-8;
 
       for (let V_added = 0; V_added <= maxVadded; V_added += step) {
-        // Για τις περιπτώσεις όπου προστίθεται βάση σε διάλυμα οξέος:
-        // strong_acid_strong_base, weak_acid_strong_base, strong_acid_weak_base
-        // Για την περίπτωση strong_base_strong_acid, το V_added είναι ο όγκος προστιθέμενου οξέος,
-        // και το αρχικό διάλυμα είναι της βάσης.
         let totalVolume, n_acid, n_base, currentpH = 0;
         if (type === "strong_base_strong_acid") {
           totalVolume = V_init_L + (V_added/1000);
-          // Αρχικό διάλυμα είναι βάση:
           n_base = C_base * V_init_L;
-          // Προστίθεται οξύ:
           n_acid = C_acid * (V_added/1000);
           const excess = n_base - n_acid;
           if (excess > epsilon) {
-            // Περίσσεια βάσης:
             let pOH = -Math.log10(excess/totalVolume);
             currentpH = 14 - pOH;
           } else if (excess < -epsilon) {
-            // Περίσσεια οξέος:
             currentpH = -Math.log10((n_acid - n_base)/totalVolume);
           } else {
             currentpH = 7;
           }
         } else {
-          // Οι άλλες περιπτώσεις: αρχικό διάλυμα είναι οξύ.
           totalVolume = V_init_L + (V_added/1000);
           n_acid = C_acid * V_init_L;
           n_base = C_base * (V_added/1000);
@@ -121,14 +112,12 @@
           }
           else if (type === "weak_acid_strong_base") {
             if (V_added === 0) {
-              // Αρχικό σημείο:
               currentpH = (pKa - Math.log10(C_acid)) / 2;
             }
             else if (n_base < n_acid - epsilon) {
               currentpH = pKa + Math.log10(n_base/(n_acid - n_base));
             }
             else if (Math.abs(n_base - n_acid) < epsilon) {
-              // Στην ισοδυναμία:
               currentpH = 7 + 0.5*(pKa + Math.log10(n_acid/totalVolume));
             }
             else {
@@ -137,15 +126,19 @@
           }
           else if (type === "strong_acid_weak_base") {
             if (V_added === 0) {
+              // Αρχικό σημείο: ισχυρό οξύ
               currentpH = -Math.log10(n_acid/totalVolume);
             }
             else if (n_acid > n_base + epsilon) {
+              // Πριν την ισοδυναμία: περίσσεια οξέος
               currentpH = -Math.log10((n_acid - n_base)/totalVolume);
             }
             else if (Math.abs(n_acid - n_base) < epsilon) {
-              currentpH = 0.5*(pKa - Math.log10(n_acid/totalVolume));
+              // Στην ισοδυναμία
+              currentpH = 7 + 0.5*(pKa + Math.log10(n_acid/totalVolume));
             }
             else {
+              // Μετά την ισοδυναμία: περίσσεια βάσης
               currentpH = pKa + Math.log10((n_base - n_acid)/n_acid);
             }
           }
@@ -197,7 +190,6 @@
               annotations: {
                 equivalencePoint: {
                   type: 'line',
-                  // Για τις περιπτώσεις strong_acid_strong_base και weak_acid_strong_base
                   xMin: (C_acid * V_init / C_base),
                   xMax: (C_acid * V_init / C_base),
                   borderColor: '#1e88e5',
