@@ -107,16 +107,13 @@
             currentpH = pKa + Math.log10(n_base / (n_acid - n_base));
           }
           else if (Math.abs(n_base - n_acid) < epsilon) {
-            // Στην ισοδυναμία: pH = -log(A)
-            // όπου A = (Kw * totalVolume * n_acid)/Ka, με Ka = 10^(-pKa)
-            const Ka = Math.pow(10, -pKa);
-            const A = (Kw * totalVolume * n_acid) / Ka;
-            currentpH = -Math.log10(A);
+            // Στην ισοδυναμία:
+            // pH = 7 + 0.5*(pKa + log(n_acid/totalVolume))
+            currentpH = 7 + 0.5 * (pKa + Math.log10(n_acid / totalVolume));
           }
           else {
             // Μετά την ισοδυναμία:
-            // Αντί για pH = 14 - log(...), χρησιμοποιούμε pH = 14 + log((n_base - n_acid)/totalVolume)
-            // έτσι ώστε το log να δίνει αρνητική τιμή για συγκεντρώσεις < 1M
+            // pH = 14 + log((n_base - n_acid)/totalVolume)
             currentpH = 14 + Math.log10((n_base - n_acid) / totalVolume);
           }
         }
