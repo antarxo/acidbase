@@ -39,11 +39,9 @@
       <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
       <br>
       <label>Όγκος αρχικού διαλύματος (mL):</label>
-      <!-- Στις περιπτώσεις όπου ο αρχικός όγκος αντιπροσωπεύει το διάλυμα οξέος (ή της βάσης για strong_base_strong_acid) -->
       <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
       <br>
       <label>pKa:</label>
-      <!-- Το pKa χρησιμοποιείται στις περιπτώσεις ασθενές οξύ + ισχυρή βάση και ισχυρό οξύ + ασθενή βάση -->
       <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
       <br><br>
       <label>Βήμα προσθήκης (mL):</label>
@@ -56,12 +54,10 @@
   <script>
     let chart;
     const ctx = document.getElementById('titrationChart').getContext('2d');
-    // Έλεγχος του annotation plugin
     if (!Chart.registry.plugins.get('annotation')) {
       console.error("Το Chart Annotation plugin δεν φορτώθηκε σωστά.");
     }
 
-    // Συνάρτηση επαναφοράς τιμών
     function resetValues() {
       document.getElementById('concAcid').value = 0.1;
       document.getElementById('concBase').value = 0.1;
@@ -71,14 +67,11 @@
       updateChart();
     }
 
-    // Συνάρτηση υπολογισμού pH για τις διάφορες περιπτώσεις
     function calculatepH(type, C_acid, C_base, V_init, pKa, step) {
       let volumes = [];
       let pH = [];
-      const Kw = 1e-14;
-      // V_init: αρχικός όγκος οξέος ή βάσης (ανάλογα με την ανάλυση), σε mL
       const V_init_L = V_init / 1000;
-      const maxVadded = 100; // Μέγιστος όγκος προστιθέμενου αντιδραστηρίου (σε mL)
+      const maxVadded = 100; 
       const epsilon = 1e-8;
 
       for (let V_added = 0; V_added <= maxVadded; V_added += step) {
@@ -126,31 +119,27 @@
           }
           else if (type === "strong_acid_weak_base") {
             if (V_added === 0) {
-              // Αρχικό σημείο: ισχυρό οξύ
               currentpH = -Math.log10(n_acid/totalVolume);
             }
             else if (n_acid > n_base + epsilon) {
-              // Πριν την ισοδυναμία: περίσσεια οξέος
               currentpH = -Math.log10((n_acid - n_base)/totalVolume);
             }
             else if (Math.abs(n_acid - n_base) < epsilon) {
-              // Στην ισοδυναμία
               currentpH = 7 + 0.5*(pKa + Math.log10(n_acid/totalVolume));
             }
             else {
-              // Μετά την ισοδυναμία: περίσσεια βάσης
               currentpH = pKa + Math.log10((n_base - n_acid)/n_acid);
             }
           }
         }
 
-        volumes.push(V_added.toFixed(2));
+        // Χρήση αριθμητικής τιμής για το V_added ώστε η θέση του annotation να υπολογίζεται σωστά
+        volumes.push(V_added);
         pH.push(currentpH);
       }
       return { volumes, pH };
     }
 
-    // Συνάρτηση ενημέρωσης του γραφήματος
     function updateChart() {
       const type = document.getElementById('analysisType').value;
       const C_acid = parseFloat(document.getElementById('concAcid').value);
@@ -159,7 +148,7 @@
       const pKa = parseFloat(document.getElementById('pKa').value);
       const step = parseFloat(document.getElementById('stepSize').value);
 
-      // Ενεργοποίηση του πεδίου pKa για weak_acid_strong_base και strong_acid_weak_base
+      // Ενεργοποίηση του πεδίου pKa όταν απαιτείται
       if (type === "weak_acid_strong_base" || type === "strong_acid_weak_base") {
         document.getElementById('pKa').disabled = false;
       } else {
@@ -190,6 +179,8 @@
               annotations: {
                 equivalencePoint: {
                   type: 'line',
+                  // Χρήση scaleID για τον ορισμό του σωστού άξονα
+                  scaleID: 'x',
                   xMin: (C_acid * V_init / C_base),
                   xMax: (C_acid * V_init / C_base),
                   borderColor: '#1e88e5',
@@ -207,7 +198,6 @@
       });
     }
 
-    // Αρχική εκτέλεση
     updateChart();
   </script>
 </body>
