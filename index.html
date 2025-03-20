@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση - Ρύθμιση Υψηλότητας Περιεχομένου</title>
+  <title>Προσομοίωση - Ρύθμιση Υψηλότητας Περιεχομένου & 3D Κουμπί</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -27,7 +27,7 @@
   <script>
     let pipetteImg, breakerImg;
     
-    let beakerFill = 0; // Τρέχον ύψος του υγρού σε pixels
+    let beakerFill = 0; // Η τιμή που αυξάνεται κατά 3 κάθε φορά
     let dropY;
     let dropActive = false;
     let dropSpeed = 5;
@@ -43,7 +43,7 @@
     
     let initialDropY;
     
-    // Ρυθμίσεις για το εικονικό κουμπί (έλλειψη) πάνω στη pipet
+    // Ρυθμίσεις για το εικονικό κουμπί πάνω στην pipet
     let buttonRadius = 15;
     let buttonCenterX, buttonCenterY;
     
@@ -74,79 +74,81 @@
       
       dropY = initialDropY;
       
-      // Ορισμός θέσης του εικονικού κουμπιού πάνω στην pipet
+      // Ορισμός θέσης του εικονικού κουμπιού:
+      // Προσθέτουμε 15 pixel στο buttonCenterY για μετατόπιση προς τα κάτω
       buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5;
-      buttonCenterY = pipetY + buttonRadius + 5;
+      buttonCenterY = pipetY + buttonRadius + 5 + 15;
       
-      // Διατηρούμε μόνο το κουμπί "Επαναφορά" για επαναφορά της προσομοίωσης
+      // Δημιουργούμε μόνο το κουμπί "Επαναφορά" για την επαναφορά της προσομοίωσης
       createButton("Επαναφορά").parent("controls").mousePressed(resetFill);
     }
     
     function draw() {
       background(240);
       
-      // Ορισμός περιοχής για το υγρό μέσα στο ποτήρι (breaker)
+      // Ορισμός της βάσης του ποτηριού (breaker)
       let containerBottom = breakerY + breakerScaledH - 20;
-      let maxLiquidHeight = breakerScaledH * 0.75; // Μέγιστο ύψος = 75% του ύψους του ποτηριού
-      let containerTop = containerBottom - maxLiquidHeight;
       
-      let liquidFillHeight = min(beakerFill, maxLiquidHeight);
-      let topLiquidY = containerBottom - liquidFillHeight;
+      // Το ορατό ύψος του υγρού υπολογίζεται ως το 75% της τιμής του beakerFill
+      let drawnLiquidHeight = beakerFill * 0.75;
       
-      // Ορισμός πλάτους του υγρού
-      let liquidWidth = breakerScaledW * 0.7 - 9;
-      let liquidX = (breakerX + (breakerScaledW - liquidWidth) / 2) - 13;
-      
-      // Σχεδίαση του ορθογωνίου υγρού
+      // Σχεδιάζουμε το ορθογώνιο του υγρού χρησιμοποιώντας το χρώμα #EAEAEA
       noStroke();
-      fill(30, 136, 229);
-      rect(liquidX, topLiquidY, liquidWidth, liquidFillHeight);
+      fill(234, 234, 234);
+      let liquidX = (breakerX + (breakerScaledW - (breakerScaledW * 0.7 - 9)) / 2) - 13;
+      let topLiquidY = containerBottom - drawnLiquidHeight;
+      let liquidWidth = breakerScaledW * 0.7 - 9;
+      rect(liquidX, topLiquidY, liquidWidth, drawnLiquidHeight);
       
-      // Σχεδίαση της σταθερής κάτω έλλειψης (εμφανίζεται μετά την πρώτη σταγόνα)
+      // Σχεδιάζουμε την κάτω έλλειψη αν έχει ξεκινήσει η πλήρωση
       if (showBaseEllipse) {
         noStroke();
-        fill(30, 136, 229);
+        fill(234, 234, 234);
         ellipseMode(CENTER);
         ellipse(liquidX + liquidWidth / 2, containerBottom, liquidWidth, liquidWidth * 0.3);
       }
       
-      // Σχεδίαση του ποτηριού (breaker)
+      // Σχεδιάζουμε το ποτήρι (breaker)
       imageMode(CORNER);
       image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       
-      // Σχεδίαση της πάνω έλλειψης με περίγραμμα πάνω από το υγρό
+      // Σχεδιάζουμε την πάνω έλλειψη με περίγραμμα πάνω από το υγρό
       stroke(180);
       strokeWeight(1);
-      fill(30, 136, 229);
+      fill(234, 234, 234);
       ellipseMode(CENTER);
       ellipse(liquidX + liquidWidth / 2, topLiquidY, liquidWidth, liquidWidth * 0.3);
       noStroke();
       
-      // Σχεδίαση του pipet
+      // Σχεδιάζουμε την pipet
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
-      // Κίνηση της σταγόνας και ενημέρωση του επιπέδου υγρού
+      // Κίνηση της σταγόνας και ενημέρωση του επιπέδου του υγρού
       if (dropActive) {
         drawDrop();
         dropY += dropSpeed;
         if (dropY > containerBottom - (liquidWidth * 0.3) / 2) {
           dropActive = false;
           dropY = initialDropY;
-          // Αύξηση του υγρού κατά 3 pixels σε σχέση με την τρέχουσα θέση
-          beakerFill = min(beakerFill + 3, maxLiquidHeight);
+          // Αύξηση του beakerFill κατά 3 pixels από την τρέχουσα τιμή
+          beakerFill += 3;
           showBaseEllipse = true;
         }
       }
       
-      // Σχεδίαση του εικονικού κουμπιού (κόκκινη έλλειψη) πάνω στην pipet
-      fill(255, 0, 0);
+      // Σχεδιάζουμε το εικονικό κουμπί με εφέ 3D:
+      // Πρώτα η "σκιά"
       noStroke();
+      fill(50, 50, 50, 100);
+      ellipse(buttonCenterX + 3, buttonCenterY + 3, buttonRadius * 2, buttonRadius * 2);
+      // Στη συνέχεια το κύριο κόκκινο κουμπί
+      fill(255, 0, 0);
       ellipse(buttonCenterX, buttonCenterY, buttonRadius * 2, buttonRadius * 2);
     }
     
     function drawDrop() {
       push();
-      fill(30, 136, 229);
+      fill(234, 234, 234);
       noStroke();
       ellipse(pipetX + pipetScaledW / 2, dropY, 10, 15);
       pop();
