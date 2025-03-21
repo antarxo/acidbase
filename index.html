@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Συρτάρια με Πάντα Ορατό Κουμπί</title>
+  <title>Συρτάρια με Ομαλή Κίνηση</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
     body {
@@ -16,7 +16,7 @@
     .drawer {
       width: 250px;
       position: fixed;
-      right: -250px; /* Εντελώς κρυμμένο */
+      right: -220px; /* Κρύβεται, αφήνοντας το κουμπί 30px έξω */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -33,17 +33,24 @@
 
     /* Στυλ για το κουμπί */
     .toggleBtn {
-      position: fixed;
-      right: 0;
-      top: 100px; /* Αλλάζει για κάθε συρτάρι */
+      position: absolute;
+      right: -30px; /* Μικρό μέρος προεξέχει */
+      top: 50%;
+      transform: translateY(-50%);
       background-color: #007bff;
       color: #fff;
       border: none;
-      padding: 10px 15px;
+      padding: 10px 12px;
       cursor: pointer;
-      border-radius: 5px 0 0 5px;
+      border-radius: 5px;
       font-size: 18px;
       z-index: 20;
+      transition: right 0.3s ease-in-out;
+    }
+
+    /* Όταν το συρτάρι ανοίγει, το κουμπί μπαίνει μέσα */
+    .drawer.active .toggleBtn {
+      right: 220px;
     }
   </style>
 </head>
@@ -64,10 +71,10 @@
         this.drawer.style('height', this.height);
         this.drawer.style('width', `${this.width}px`);
 
-        // Δημιουργία του κουμπιού (εκτός συρταριού)
+        // Δημιουργία του κουμπιού μέσα στο συρτάρι
         this.button = createButton(this.buttonLabel);
         this.button.addClass('toggleBtn');
-        this.button.style('top', this.top);
+        this.button.parent(this.drawer); // Το κουμπί είναι μέσα στο συρτάρι
         this.button.mousePressed(() => this.toggle());
       }
 
