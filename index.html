@@ -2,13 +2,13 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Διάταξη χωρίς Κύλιση - Τροποποιημένη με Πίνακα</title>
+  <title>Διάταξη χωρίς Κύλιση - Δεξί Πάνελ με Πίνακα</title>
   <!-- Εξωτερικές βιβλιοθήκες -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
-    /* Ορίζουμε ολόκληρη σελίδα με padding 20px ώστε να υπάρχει περιθώριο γύρω από το περιεχόμενο */
+    /* Γενικές ρυθμίσεις με περιθώριο 20px γύρω από το περιεχόμενο */
     html, body {
       margin: 0;
       padding: 20px;
@@ -19,23 +19,23 @@
       overflow: hidden;
       font-family: Arial, sans-serif;
     }
-    /* Χωρίζουμε το σώμα σε 2 στήλες: αριστερό 60% και δεξί 40% με gap 20px */
+    /* Διαχωρισμός σε δύο στήλες: αριστερό 60% και δεξί 40% με gap 20px */
     body {
       display: grid;
       grid-template-columns: 60% 40%;
       gap: 20px;
     }
-    /* Αριστερό Panel - ύψος ως το διαθέσιμο ύψος της περιοχής */
+    /* Αριστερό πάνελ */
     #left-container {
       height: 100%;
       padding: 20px;
       gap: 20px;
       display: grid;
-      /* Αναλογία 65% για το διάγραμμα και 35% για το κάτω μέρος */
+      /* Χωρίζουμε σε 2 σειρές: 65% για το διάγραμμα και 35% για μηνύματα/κουμπιά */
       grid-template-rows: 65% 35%;
       overflow: hidden;
     }
-    /* Διάγραμμα Chart.js: προστίθεται margin-bottom για περιθώριο 20px στο κάτω μέρος */
+    /* Container διαγράμματος Chart.js */
     #diagram-container {
       border: 1px solid #ccc;
       background-color: #fff;
@@ -44,7 +44,7 @@
       box-sizing: border-box;
       margin-bottom: 20px;
     }
-    /* Κάτω περιοχή αριστερού panel (μηνύματα και κουμπιά) */
+    /* Κάτω μέρος αριστερού πάνελ (μηνύματα & κουμπιά) */
     #bottom-container {
       display: flex;
       gap: 20px;
@@ -76,7 +76,7 @@
     #buttons-container button:hover {
       background-color: #45a049;
     }
-    /* Δεξί Panel: padding-right 20px για περιθώριο από τα δεξιά */
+    /* Δεξί πάνελ: padding-right 20px για περιθώριο στα δεξιά */
     #right-container {
       height: 100%;
       padding: 20px;
@@ -85,7 +85,7 @@
       border-left: 1px solid #ccc;
       background-color: #fff;
     }
-    /* Container οδηγιών: Χωρίζουμε το δεξί πάνελ σε δύο στήλες */
+    /* Container οδηγιών στο δεξί πάνελ χωρίζεται σε 2 στήλες */
     #instructions-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -100,11 +100,11 @@
       width: 100%;
       overflow: hidden;
     }
-    /* Προσθέτουμε margin-bottom 20px για να έχουμε περιθώριο στο κάτω μέρος των καμβάδων */
+    /* Προσθήκη margin-bottom 20px για τα κατώτερα όρια των καμβάδων */
     #diagram-container, #glass-canvas-container {
       margin-bottom: 20px;
     }
-    /* Στήλη για τους επιλογείς AcidBase με πίνακα */
+    /* Στήλη για τους επιλογείς AcidBase: πίνακας */
     #acidbase-params {
       border: 1px solid #ccc;
       padding: 10px;
@@ -112,12 +112,12 @@
       box-sizing: border-box;
       overflow: auto;
     }
-    /* Στυλ για τον πίνακα: */
+    /* Στυλ για τον πίνακα στο δεξί πάνελ */
     #acidbase-params table {
       width: 100%;
       border-collapse: collapse;
     }
-    #acidbase-params th, 
+    #acidbase-params th,
     #acidbase-params td {
       border: 1px solid #ccc;
       padding: 10px;
@@ -127,13 +127,13 @@
   </style>
 </head>
 <body>
-  <!-- Αριστερό Panel -->
+  <!-- Αριστερό πάνελ -->
   <div id="left-container">
     <!-- Διάγραμμα Chart.js -->
     <div id="diagram-container">
       <canvas id="titrationChart"></canvas>
     </div>
-    <!-- Κάτω περιοχή: Μηνύματα και Κουμπιά -->
+    <!-- Κάτω μέρος: μηνύματα & κουμπιά -->
     <div id="bottom-container">
       <div id="messages-container">
         <p>Μηνύματα / Οδηγίες</p>
@@ -149,7 +149,7 @@
     </div>
   </div>
   
-  <!-- Δεξί Panel -->
+  <!-- Δεξί πάνελ -->
   <div id="right-container">
     <div id="instructions-container">
       <!-- Στήλη για το γραφικό του Glass (p5.js) -->
@@ -161,13 +161,15 @@
       <div id="acidbase-params">
         <table>
           <tr>
-            <!-- Πρώτο κελί: Συγχωνευμένη πρώτη στήλη που καλύπτει 2 σειρές -->
+            <!-- Πρώτη στήλη συγχωνευμένη σε 2 σειρές: περιέχει το γραφικό -->
             <td rowspan="2">
-              <!-- Περιεχόμενο για την πρώτη στήλη (π.χ. οδηγίες ή σταθερό κείμενο) -->
-              <strong>Πληροφορίες:</strong>
-              <p>Εδώ μπορείτε να βάλετε οδηγίες ή άλλο περιεχόμενο.</p>
+              <!-- Εδώ τοποθετείται το γραφικό (π.χ. εικόνα ή άλλο περιεχόμενο) -->
+              <strong>Γραφικό:</strong>
+              <div style="width:100%; height:150px; background:#eee; text-align:center; line-height:150px;">
+                [Εικόνα]
+              </div>
             </td>
-            <!-- Δεύτερο κελί, πρώτη σειρά, δεύτερη στήλη: ρυθμίσεις -->
+            <!-- Δεύτερη στήλη, πρώτη σειρά: ρυθμίσεις 1 -->
             <td>
               <label for="analysisType">Τύπος Ανάλυσης:</label>
               <select id="analysisType" onchange="updateChart(); updateLabel();">
@@ -179,7 +181,7 @@
             </td>
           </tr>
           <tr>
-            <!-- Δεύτερη σειρά, δεύτερη στήλη: ρυθμίσεις -->
+            <!-- Δεύτερη σειρά, δεύτερη στήλη: ρυθμίσεις 2 -->
             <td>
               <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
               <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
@@ -196,9 +198,8 @@
             </td>
           </tr>
           <tr>
-            <!-- Τρίτη σειρά: συγχωνευμένα κελιά που καλύπτουν και τις 2 στήλες -->
+            <!-- Τρίτη σειρά: συγχωνευμένα κελιά (colspan="2") για μελλοντικό περιεχόμενο -->
             <td colspan="2">
-              <!-- Περιεχόμενο για συζήτηση στο μέλλον -->
               <p><em>Εδώ θα τοποθετηθούν πρόσθετα περιεχόμενα που θα συζητηθούν στη συνέχεια.</em></p>
             </td>
           </tr>
@@ -389,7 +390,7 @@
       breakerScaledW = breakerImg.width * scaleFactorImages;
       breakerScaledH = breakerImg.height * scaleFactorImages;
       
-      // Τοποθέτηση των στοιχείων με βάση τις διαστάσεις του καμβά
+      // Τοποθέτηση στοιχείων βάσει διαστάσεων καμβά
       pipetX = canvasWidth - pipetScaledW;
       pipetY = 0;
       breakerX = canvasWidth - breakerScaledW;
