@@ -2,56 +2,47 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Mockup Layout - Σύμφωνα με το layout.png</title>
+  <title>Mockup Layout - 4 Χώροι</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
+    /* Ορίζουμε μια grid διάταξη για την οθόνη */
     body {
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
       height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 480px;
+      grid-template-rows: 60% 40%;
+      grid-template-areas:
+        "diagram instructions"
+        "messages buttons";
+      gap: 10px;
       font-family: Arial, sans-serif;
+      box-sizing: border-box;
     }
-    /* Container που χωρίζει το διάγραμμα και το panel οδηγιών/κουμπιών */
-    #top-container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-    /* Διάγραμμα (αριστερό μέρος) */
+    /* Αριστερός πάνω χώρος: Διάγραμμα */
     #diagram-container {
-      flex: 1;
+      grid-area: diagram;
       background-color: #fff;
     }
-    /* Panel οδηγιών/κουμπιών (δεξί μέρος) */
-    #right-container {
-      width: 480px; /* 60% μεγαλύτερο από 300px */
-      display: flex;
-      flex-direction: column;
-      background-color: #f8f8f8;
-      position: relative;
-    }
-    /* Χώρος οδηγιών (με τα γραφικά του glass & επιλογές acidbase) */
+    /* Δεξιός πάνω χώρος: Οδηγίες (glass & επιλογές) */
     #instructions-container {
-      flex: 1;
-      position: relative;
-      padding: 10px;
+      grid-area: instructions;
       background-color: #eef;
-    }
-    /* Χώρος κουμπιών (κάτω από το instructions) */
-    #buttons-container {
-      height: 100px;
-      background: #ddd;
       padding: 10px;
-      box-sizing: border-box;
+      position: relative;
     }
-    /* Χώρος μηνυμάτων (κάτω από το top container) */
+    /* Κάτω αριστερά: Μηνύματα/Οδηγίες */
     #messages-container {
-      height: 100px;
-      background: #e0e0e0;
+      grid-area: messages;
+      background-color: #e0e0e0;
       padding: 10px;
-      box-sizing: border-box;
+    }
+    /* Κάτω δεξιά: Επιπλέον κουμπιά */
+    #buttons-container {
+      grid-area: buttons;
+      background-color: #ddd;
+      padding: 10px;
     }
     canvas {
       display: block;
@@ -59,29 +50,22 @@
   </style>
 </head>
 <body>
-  <div id="top-container">
-    <div id="diagram-container"></div>
-    <div id="right-container">
-      <div id="instructions-container">
-        <!-- Εδώ θα ενσωματωθούν τα γραφικά του glass και οι επιλογές του acidbase -->
-        <p style="text-align:center; font-weight:bold;">Οδηγίες & Επιλογές</p>
-      </div>
-      <div id="buttons-container">
-        <!-- Εδώ θα τοποθετηθούν τα πρόσθετα κουμπιά (εκτός του "Πάτα!") -->
-        <p style="text-align:center; font-weight:bold;">Πρόσθετα Κουμπιά</p>
-      </div>
-    </div>
-  </div>
-  <div id="messages-container">
-    <p>Χώρος μηνυμάτων και οδηγιών</p>
-  </div>
+  <!-- Αριστερός πάνω: Διάγραμμα -->
+  <div id="diagram-container"></div>
+  <!-- Δεξιός πάνω: Οδηγίες/επιλογές με το ενσωματωμένο κουμπί "Πάτα!" -->
+  <div id="instructions-container"></div>
+  <!-- Κάτω αριστερά: Μηνύματα/Οδηγίες -->
+  <div id="messages-container"></div>
+  <!-- Κάτω δεξιά: Επιπλέον κουμπιά (χωρίς το "Πάτα!") -->
+  <div id="buttons-container"></div>
 
   <script>
-    // Καμβάς για το διάγραμμα (αριστερό μέρος)
+    // Καμβάς για το διάγραμμα (αριστερός πάνω χώρος)
     let diagramSketch = function(p) {
       p.setup = function() {
-        let w = p.windowWidth - 480; // αφαιρούμε το πλάτος του δεξιού container
-        let h = p.windowHeight - 100; // αφαιρούμε το ύψος του χώρου μηνυμάτων
+        let container = document.getElementById("diagram-container");
+        let w = container.clientWidth;
+        let h = container.clientHeight;
         let canvas = p.createCanvas(w, h);
         canvas.parent("diagram-container");
       }
@@ -95,60 +79,40 @@
     }
     new p5(diagramSketch);
 
-    // Καμβάς για το panel οδηγιών (στο instructions-container)
+    // Καμβάς για τις οδηγίες/επιλογές (δεξιός πάνω χώρος)
     let instructionsSketch = function(p) {
       p.setup = function() {
         let container = document.getElementById("instructions-container");
-        let w = container.offsetWidth;
-        let h = container.offsetHeight;
+        let w = container.clientWidth;
+        let h = container.clientHeight;
         let canvas = p.createCanvas(w, h);
         canvas.parent("instructions-container");
       }
       p.draw = function() {
         p.background(240);
-        // Ενδεικτική τοποθέτηση των γραφικών στοιχείων του glass
         p.fill(0);
         p.textAlign(p.CENTER, p.CENTER);
         p.textSize(18);
-        p.text("Γραφικά του Glass", p.width/2, 40);
+        p.text("Γραφικά του Glass & Επιλογές AcidBase", p.width/2, 40);
         
-        // Κουμπί "Πάτα!" ενσωματωμένο στο canvas του glass (στην κάτω δεξιά γωνία)
+        // Κουμπί "Πάτα!" ενσωματωμένο στον καμβά, στη κάτω δεξιά γωνία
         p.fill(200, 0, 0);
         p.noStroke();
         p.ellipse(p.width - 30, p.height - 30, 50, 50);
         p.fill(255);
         p.textSize(12);
         p.text("Πάτα!", p.width - 30, p.height - 30);
-        
-        // Εδώ μπορούν να ενσωματωθούν και τα controls του acidbase (π.χ. dropdowns, sliders κλπ.)
       }
     }
     new p5(instructionsSketch);
 
-    // Καμβάς για τον χώρο κουμπιών (στο buttons-container)
-    let buttonsSketch = function(p) {
-      p.setup = function() {
-        let container = document.getElementById("buttons-container");
-        let w = container.offsetWidth;
-        let h = container.offsetHeight;
-        let canvas = p.createCanvas(w, h);
-        canvas.parent("buttons-container");
-      }
-      p.draw = function() {
-        p.background(200);
-        p.fill(0);
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(18);
-        p.text("Επιπλέον Κουμπιά", p.width/2, p.height/2);
-        // Τα κουμπιά εδώ θα οριστούν ξεχωριστά (χωρίς το "Πάτα!")
-      }
-    }
-    new p5(buttonsSketch);
-
-    // Καμβάς για το χώρο μηνυμάτων (στο messages-container)
+    // Καμβάς για τα μηνύματα/οδηγίες (κάτω αριστερά)
     let messagesSketch = function(p) {
       p.setup = function() {
-        let canvas = p.createCanvas(p.windowWidth, 100);
+        let container = document.getElementById("messages-container");
+        let w = container.clientWidth;
+        let h = container.clientHeight;
+        let canvas = p.createCanvas(w, h);
         canvas.parent("messages-container");
       }
       p.draw = function() {
@@ -160,6 +124,25 @@
       }
     }
     new p5(messagesSketch);
+
+    // Καμβάς για τα επιπλέον κουμπιά (κάτω δεξιά)
+    let buttonsSketch = function(p) {
+      p.setup = function() {
+        let container = document.getElementById("buttons-container");
+        let w = container.clientWidth;
+        let h = container.clientHeight;
+        let canvas = p.createCanvas(w, h);
+        canvas.parent("buttons-container");
+      }
+      p.draw = function() {
+        p.background(200);
+        p.fill(0);
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(18);
+        p.text("Επιπλέον Κουμπιά", p.width/2, p.height/2);
+      }
+    }
+    new p5(buttonsSketch);
   </script>
 </body>
 </html>
