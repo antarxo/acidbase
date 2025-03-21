@@ -6,7 +6,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
-      margin: 0;
+      margin: 100px 0 0 0; /* Μετακίνηση ολόκληρης της εφαρμογής 100px προς τα κάτω */
       background-color: #f0f0f0;
       overflow: hidden;
     }
@@ -64,7 +64,7 @@
     
     let rippleEffects = [];
     
-    // Sliders για το αρχικό περιεχόμενο και το pipet
+    // Sliders για το περιεχόμενο του δοχείου και το pipet
     let sliderInitial, sliderPipet;
     let labelInitial, labelPipet;
     let maxLiquid; // Μέγιστο ύψος υγρού στο δοχείο
@@ -111,33 +111,36 @@
       sliderInitial = createSlider(0, maxLiquid, maxLiquid/2, 1);
       sliderPipet = createSlider(0, maxLiquid, maxLiquid/2, 1);
       
-      // Τοποθέτηση των sliders στο container με απόλυτη τοποθέτηση και z-index
+      // Τοποθέτηση του slider του δοχείου (sliderInitial)
       sliderInitial.parent("canvas-container");
       sliderInitial.style('position','absolute');
       sliderInitial.style('z-index','10');
       sliderInitial.style('transform', 'rotate(-90deg)');
-      // Ο slider του δοχείου τοποθετείται δεξιά του ποτηριού, προς το κάτω μέρος του καμβά
-      sliderInitial.style('left', (breakerX + breakerScaledW + 20) + 'px');
-      sliderInitial.style('top', (breakerY + breakerScaledH - 40) + 'px');
+      // Μετακινείται 80 px αριστερότερα και 80 px προς τα πάνω
+      sliderInitial.style('left', (breakerX + breakerScaledW + 20 - 80) + 'px');
+      sliderInitial.style('top', (breakerY + breakerScaledH - 40 - 80) + 'px');
       
+      // Τοποθέτηση του slider του pipet (sliderPipet)
       sliderPipet.parent("canvas-container");
       sliderPipet.style('position','absolute');
       sliderPipet.style('z-index','10');
       sliderPipet.style('transform', 'rotate(-90deg)');
-      // Ο slider του pipet τοποθετείται στα αριστερά του, πάνω στον καμβά
-      sliderPipet.style('left', (pipetX - 50) + 'px');
-      sliderPipet.style('top', (pipetY + 10) + 'px');
+      // Μετακινείται 60 px αριστερότερα και 80 px προς τα Κάτω
+      sliderPipet.style('left', (pipetX - 50 - 60) + 'px');
+      sliderPipet.style('top', (pipetY + 10 + 80) + 'px');
       
-      // Δημιουργία ετικετών για τους sliders
+      // Δημιουργία ετικετών για τους sliders και τοποθέτηση στο πάνω άκρο κάθε slider
       labelInitial = createDiv(sliderInitial.value() + " ml");
       labelInitial.parent("canvas-container");
       labelInitial.class("slider-label");
-      labelInitial.position(breakerX + breakerScaledW + 20, breakerY + breakerScaledH - 60);
+      // Τοποθέτηση της ετικέτας του δοχείου στο πάνω άκρο του sliderInitial
+      labelInitial.position(breakerX + breakerScaledW + 20 - 80, breakerY + breakerScaledH - 40 - 80 - 20);
       
       labelPipet = createDiv(sliderPipet.value() + " ml");
       labelPipet.parent("canvas-container");
       labelPipet.class("slider-label");
-      labelPipet.position(pipetX - 80, pipetY + 10);
+      // Τοποθέτηση της ετικέτας του pipet στο πάνω άκρο του sliderPipet
+      labelPipet.position(pipetX - 50 - 60, pipetY + 10 + 80 - 20);
       
       // Ενημέρωση των sliders ώστε το άθροισμά τους να παραμένει σταθερό (maxLiquid)
       sliderInitial.input(function() {
@@ -204,7 +207,7 @@
           if (dropY >= targetY) {
             createRippleEffects(liquidX + liquidWidth / 2, targetY, liquidWidth, liquidWidth * 0.3);
             bouncing = true;
-            bounceVelocity = -2; // Πρώτη αναπήδηση με μειωμένο ύψος (μείωση κατά 5 μονάδες)
+            bounceVelocity = -2; // Πρώτη αναπήδηση με μειωμένο ύψος
             bounceCount = 1;
           }
         } else {
@@ -214,7 +217,7 @@
             if (bounceCount === 1) {
               // Δεύτερη αναπήδηση
               createRippleEffects(liquidX + liquidWidth / 2, targetY, liquidWidth, liquidWidth * 0.3);
-              bounceVelocity = -2; // Δεύτερη αναπήδηση
+              bounceVelocity = -2;
               bounceCount++;
             } else {
               // Ολοκλήρωση μετά τη δεύτερη αναπήδηση
