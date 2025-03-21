@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση - Εφέ Ripple κατά την Επίδραση της Σταγόνας</title>
+  <title>Προσομοίωση - Εφέ Bounce για τη Σταγόνα</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -33,6 +33,11 @@
     let dropSpeed = 5;
     let showBaseEllipse = false;
     
+    // Νέες μεταβλητές για το bounce εφέ
+    let bouncing = false;
+    let bounceVelocity = 0;
+    let gravity = 0.5;
+    
     let scaleFactorImages = 0.5;
     
     let pipetScaledW, pipetScaledH;
@@ -48,7 +53,7 @@
     let buttonRadius = 15;
     let buttonCenterX, buttonCenterY;
     
-    // Πίνακας για τα εφέ ripple
+    // Πίνακας για τα ripple εφέ
     let rippleEffects = [];
     
     function preload() {
@@ -57,18 +62,16 @@
     }
     
     function setup() {
-      // Υπολογισμός διαστάσεων με scale factor
       pipetScaledW = pipetteImg.width * scaleFactorImages;
       pipetScaledH = pipetteImg.height * scaleFactorImages;
       breakerScaledW = breakerImg.width * scaleFactorImages;
       breakerScaledH = breakerImg.height * scaleFactorImages;
       
-      // Ορίζουμε το canvas με πλάτος το μεγαλύτερο από τις δύο εικόνες ώστε να στοιχίζονται στη δεξιά πλευρά
       let canvasWidth = max(pipetScaledW, breakerScaledW);
       let canvasHeight = pipetScaledH + breakerScaledH;
       createCanvas(canvasWidth, canvasHeight).parent("canvas-container");
       
-      // Τοποθέτηση εικόνων ώστε η δεξιά τους άκρη να ευθυγραμμίζεται:
+      // Στοιχίζουμε τις εικόνες στη δεξιά πλευρά:
       pipetX = canvasWidth - pipetScaledW;
       pipetY = 0;
       
@@ -79,7 +82,7 @@
       initialDropY = pipetBottom;
       dropY = initialDropY;
       
-      // Ορισμός θέσης του κόκκινου κουμπιού (με μετατόπιση αριστερότερα κατά 8 pixels)
+      // Ορισμός θέσης του κόκκινου κουμπιού με μετατόπιση αριστερότερα κατά 8 pixels
       buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5 - 8;
       buttonCenterY = pipetY + buttonRadius + 5 + 15;
       
@@ -93,22 +96,19 @@
     function draw() {
       background(240);
       
-      // Ορισμός του "ποτηριού" βάσει της εικόνας breaker
+      // Ορισμός του "ποτηριού" βάσει της εικόνας breaker:
       let containerBottom = breakerY + breakerScaledH - 20;
-      // Το μέγιστο ορατό ύψος του υγρού είναι 65% του ύψους του breaker
       let maxLiquidHeight = breakerScaledH * 0.65;
-      
-      // Το ορατό ύψος του υγρού είναι το ελάχιστο μεταξύ του beakerFill και του maxLiquidHeight
       let drawnLiquidHeight = min(beakerFill, maxLiquidHeight);
       
-      // Θέση και πλάτος του υγρού μέσα στο ποτήρι
+      // Θέση και πλάτος του υγρού
       let liquidWidth = breakerScaledW * 0.7 - 9;
       let liquidX = (breakerX + (breakerScaledW - liquidWidth) / 2) - 13;
       
       // --- Z-index 70: Κάτω έλλειψη (βάση του υγρού) ---
       if (showBaseEllipse) {
         noStroke();
-        fill(234, 234, 234); // #EAEAEA
+        fill(234, 234, 234);
         ellipseMode(CENTER);
         ellipse(liquidX + liquidWidth / 2, containerBottom, liquidWidth, liquidWidth * 0.3);
       }
@@ -130,20 +130,34 @@
       imageMode(CORNER);
       image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       
-      // Κίνηση της σταγόνας και έλεγχος για το σημείο παύσης
+      // Ορισμός του στόχου (targetY) για την σταγόνα: το ύψος του κέντρου της πάνω έλλειψης
+      let targetY = containerBottom - drawnLiquidHeight;
+      
+      // Κίνηση της σταγόνας με bounce εφέ
       if (dropActive) {
-        drawDrop();
-        dropY += dropSpeed;
-        // Η σταγόνα σταματά όταν φτάσει στο ύψος του οριζόντιου άξονα της μετακινούμενης έλλειψης
-        let targetY = containerBottom - drawnLiquidHeight; // το κέντρο της πάνω έλλειψης
-        if (dropY > targetY) {
-          dropActive = false;
-          dropY = initialDropY;
-          beakerFill += 3;
-          showBaseEllipse = true;
-          // Δημιουργία εφέ ripple όταν η σταγόνα φτάσει στο targetY
-          createRippleEffects(liquidX + liquidWidth / 2, targetY, liquidWidth, liquidWidth * 0.3);
+        // Αν δεν έχουμε ξεκινήσει το bounce, κινούμαστε κανονικά
+        if (!bouncing) {
+          dropY += dropSpeed;
+          if (dropY >= targetY) {
+            // Ξεκινάμε το bounce: αναστρέφουμε τη ταχύτητα
+            bouncing = true;
+            bounceVelocity = -3; // αρχική αναπήδηση
+          }
+        } else {
+          // Εφαρμόζουμε τη φυσική της αναπήδησης (βαρύτητα)
+          dropY += bounceVelocity;
+          bounceVelocity += gravity;
+          // Αν η σταγόνα επανέλθει στο target και η ταχύτητα είναι θετική (δηλαδή κατεβαίνει) τότε ολοκληρώνουμε το bounce
+          if (dropY >= targetY && bounceVelocity > 0) {
+            dropActive = false;
+            bouncing = false;
+            dropY = initialDropY;
+            beakerFill += 3;
+            showBaseEllipse = true;
+            createRippleEffects(liquidX + liquidWidth / 2, targetY, liquidWidth, liquidWidth * 0.3);
+          }
         }
+        drawDrop();
       }
       
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
@@ -155,7 +169,6 @@
         stroke(137, 137, 137, r.alpha);
         strokeWeight(2);
         ellipse(r.x, r.y, r.w, r.h);
-        // Ενημέρωση με αύξηση διαστάσεων και μείωση αδιαφάνειας
         r.w += r.growthRate;
         r.h += r.growthRate * (r.maxH / r.maxW);
         r.alpha -= 5;
@@ -170,28 +183,25 @@
       drawingContext.shadowOffsetY = 0;
       drawingContext.shadowBlur = 8;
       drawingContext.shadowColor = "rgba(0, 0, 0, 0.5)";
-      
       noStroke();
       fill(255, 0, 0);
       ellipse(buttonCenterX, buttonCenterY, buttonRadius * 2, buttonRadius * 2);
-      
       drawingContext.shadowBlur = 0;
       fill(255);
       text("Πάτα!", buttonCenterX, buttonCenterY);
       pop();
     }
     
-    // Η σταγόνα ξεκινά από σημείο 50 pixels πιο αριστερά από το κέντρο της pipet
+    // Σχεδίαση της σταγόνας (ξεκινά από 50 pixels πιο αριστερά από το κέντρο της pipet)
     function drawDrop() {
       push();
-      fill(137, 137, 137, 217); // Χρώμα #898989 με opacity ~85%
+      fill(137, 137, 137, 217);
       noStroke();
       ellipse(pipetX + pipetScaledW / 2 - 50, dropY, 10, 15);
       pop();
     }
     
-    // Δημιουργεί ripple εφέ (3 ελλείψεις) από το σημείο (x,y)
-    // οι παράμετροι maxW, maxH καθορίζουν το τελικό μέγεθος της έλλειψης
+    // Δημιουργία ripple εφέ (3 ελλείψεις) από το σημείο (x,y)
     function createRippleEffects(x, y, maxW, maxH) {
       let count = 3;
       for (let i = 0; i < count; i++) {
@@ -202,7 +212,7 @@
           h: 0,
           maxW: maxW,
           maxH: maxH,
-          growthRate: 2 + i, // μικρή παραλλαγή για κάθε ripple
+          growthRate: 2 + i,
           alpha: 255
         });
       }
@@ -211,6 +221,9 @@
     function startDrop() {
       if (!dropActive) {
         dropActive = true;
+        // Επαναφορά των μεταβλητών bounce
+        bouncing = false;
+        bounceVelocity = 0;
       }
     }
     
@@ -218,11 +231,13 @@
       beakerFill = 0;
       dropY = initialDropY;
       dropActive = false;
+      bouncing = false;
+      bounceVelocity = 0;
       showBaseEllipse = false;
       rippleEffects = [];
     }
     
-    // Έλεγχος αν το κλικ έγινε εντός του κόκκινου κουμπιού
+    // Έλεγχος κλικ στο κόκκινο κουμπί
     function mousePressed() {
       if (dist(mouseX, mouseY, buttonCenterX, buttonCenterY) < buttonRadius) {
         startDrop();
