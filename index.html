@@ -2,149 +2,461 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Τελικό Layout - AcidBase</title>
+  <title>Ενσωματωμένο Layout - AcidBase & Glass</title>
+  <!-- Εξωτερικές βιβλιοθήκες -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
     /* Γενικές ρυθμίσεις */
     body {
       margin: 0;
       padding: 20px;
-      height: calc(100vh - 40px); /* Αφαιρούμε το συνολικό περιθώριο */
+      height: calc(100vh - 40px);
       display: grid;
       grid-template-columns: 1fr 480px;
       grid-template-rows: 70% 30%;
       grid-template-areas:
         "diagram instructions"
-        "messages messages";
+        "messages buttons";
       gap: 20px;
       font-family: Arial, sans-serif;
       box-sizing: border-box;
       background-color: #f9f9f9;
     }
-
-    /* Στυλ περιοχών */
     .section {
-      border: 1px solid #ccc; /* Αχνό γκρι περίγραμμα */
+      border: 1px solid #ccc;
       background-color: #fff;
       padding: 10px;
     }
-
-    /* Διάγραμμα (αριστερός πάνω) */
-    #diagram-container {
-      grid-area: diagram;
-    }
-
-    /* Οδηγίες / Επιλογές (δεξιός πάνω) */
+    /* Περιοχές */
+    #diagram-container { grid-area: diagram; }
     #instructions-container {
       grid-area: instructions;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
-
-    /* Κάτω περιοχή: Μηνύματα & Κουμπιά (100% του πλάτους) */
-    #bottom-container {
-      grid-area: messages;
-      display: flex;
+    #messages-container { grid-area: messages; }
+    #buttons-container { grid-area: buttons; }
+    /* Στυλ για το γραφικό του glass */
+    #glass-container {
+      border: 1px solid #ccc;
+      position: relative;
+      min-height: 400px;
+    }
+    /* Στυλ για τον πίνακα λύσεων */
+    #solution-table {
       width: 100%;
-      gap: 20px;
+      border-collapse: collapse;
     }
-
-    /* Κάτω αριστερά: Μηνύματα/Οδηγίες (75%) */
-    #messages-container {
-      flex: 3;
+    #solution-table th, #solution-table td {
+      border: 1px solid #ccc;
+      padding: 5px;
+      text-align: center;
     }
-
-    /* Κάτω δεξιά: Κουμπιά (25%) */
-    #buttons-container {
-      flex: 1;
-    }
+    #solution-table th { background-color: #eee; }
   </style>
 </head>
 <body>
-  <!-- Επάνω περιοχή -->
-  <div id="diagram-container" class="section"></div>
-  <div id="instructions-container" class="section"></div>
-
-  <!-- Κάτω περιοχή με δύο τμήματα -->
-  <div id="bottom-container">
-    <div id="messages-container" class="section"></div>
-    <div id="buttons-container" class="section"></div>
+  <!-- Πάνω Αριστερή Περιοχή: Διάγραμμα (AcidBase) -->
+  <div id="diagram-container" class="section">
+    <canvas id="titrationChart"></canvas>
   </div>
-
+  
+  <!-- Πάνω Δεξιά Περιοχή: Διαχωρισμένη σε δύο στήλες -->
+  <div id="instructions-container" class="section">
+    <!-- Αριστερή στήλη: Γραφικό του Glass -->
+    <div id="glass-column">
+      <div id="glass-canvas-container"></div>
+    </div>
+    <!-- Δεξιά στήλη: Πίνακας στοιχείων για το pipet και το beaker -->
+    <div id="table-column">
+      <table id="solution-table">
+        <tr>
+          <th>Pipet Διάλυμα</th>
+        </tr>
+        <tr>
+          <td id="pipet-info">70 ml</td>
+        </tr>
+        <tr>
+          <th>Beaker Διάλυμα</th>
+        </tr>
+        <tr>
+          <td id="beaker-info">70 ml</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Κάτω Αριστερή Περιοχή: (Μηνύματα) - προς το παρόν κενή -->
+  <div id="messages-container" class="section">
+    <!-- Δεν έχει τοποθετηθεί περιεχόμενο -->
+  </div>
+  
+  <!-- Κάτω Δεξιά Περιοχή: Κουμπιά (εκτός του κόκκινου κουμπιού του glass) -->
+  <div id="buttons-container" class="section">
+    <button id="resetAcidbase">Επαναφορά AcidBase</button>
+    <button id="resetGlass">Επαναφορά Glass</button>
+  </div>
+  
+  <!-- Scripts για το AcidBase διάγραμμα (βασισμένο στο acidebase.html) -->
   <script>
-    // Καμβάς για το διάγραμμα (αριστερός πάνω χώρος)
-    let diagramSketch = function(p) {
-      p.setup = function() {
-        let container = document.getElementById("diagram-container");
-        let canvas = p.createCanvas(container.clientWidth, container.clientHeight);
-        canvas.parent("diagram-container");
+    let chart;
+    const ctx = document.getElementById('titrationChart').getContext('2d');
+    
+    function calculatepH(type, C_acid, C_base, V_init, pKaInput, step) {
+      let volumes = [];
+      let pH = [];
+      const V_init_L = V_init / 1000;
+      const maxVadded = 100; // σε mL
+      const epsilon = 1e-8;
+      for (let V_added = 0; V_added <= maxVadded; V_added += step) {
+        let totalVolume, n_acid, n_base, currentpH = 0;
+        if (type === "strong_base_strong_acid") {
+          totalVolume = V_init_L + (V_added / 1000);
+          n_base = C_base * V_init_L;
+          n_acid = C_acid * (V_added / 1000);
+          const excess = n_base - n_acid;
+          if (excess > epsilon) {
+            let pOH = -Math.log10(excess / totalVolume);
+            currentpH = 14 - pOH;
+          } else if (excess < -epsilon) {
+            currentpH = -Math.log10((n_acid - n_base) / totalVolume);
+          } else {
+            currentpH = 7;
+          }
+        } else {
+          totalVolume = V_init_L + (V_added / 1000);
+          if (type !== "strong_acid_weak_base") {
+            n_acid = C_acid * V_init_L;
+            n_base = C_base * (V_added / 1000);
+          }
+          if (type === "strong_acid_strong_base") {
+            const excess = n_acid - n_base;
+            if (excess > epsilon) {
+              currentpH = -Math.log10(excess / totalVolume);
+            } else if (excess < -epsilon) {
+              currentpH = 14 + Math.log10((-excess) / totalVolume);
+            } else {
+              currentpH = 7;
+            }
+          }
+          else if (type === "weak_acid_strong_base") {
+            if (V_added === 0) {
+              currentpH = (pKaInput - Math.log10(C_acid)) / 2;
+            }
+            else if (n_base < n_acid - epsilon) {
+              currentpH = pKaInput + Math.log10(n_base / (n_acid - n_base));
+            }
+            else if (Math.abs(n_base - n_acid) < epsilon) {
+              currentpH = 7 + 0.5 * (pKaInput + Math.log10(n_acid / totalVolume));
+            }
+            else {
+              currentpH = 14 + Math.log10((n_base - n_acid) / totalVolume);
+            }
+          }
+          else if (type === "strong_acid_weak_base") {
+            n_base = C_base * V_init_L;
+            n_acid = C_acid * (V_added / 1000);
+            totalVolume = V_init_L + (V_added / 1000);
+            const pKb = pKaInput;
+            if (V_added === 0) {
+              currentpH = 14 - 0.5 * (pKb - Math.log10(C_base));
+            } else if (n_acid < n_base - epsilon) {
+              currentpH = 14 - (pKb + Math.log10(n_acid / (n_base - n_acid)));
+            } else if (Math.abs(n_acid - n_base) < epsilon) {
+              currentpH = 0.5 * ((14 - pKb) - Math.log10(n_base / totalVolume));
+            } else {
+              currentpH = -Math.log10((n_acid - n_base) / totalVolume);
+            }
+          }
+        }
+        volumes.push(V_added);
+        pH.push(currentpH);
       }
-      p.draw = function() {
-        p.background(255);
-        p.fill(0);
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(24);
-        p.text("Διάγραμμα", p.width / 2, p.height / 2);
+      return { volumes, pH };
+    }
+    
+    function updateChart() {
+      // Χρήση προκαθορισμένων τιμών για επίδειξη
+      const type = "strong_acid_strong_base";
+      const C_acid = 0.1;
+      const C_base = 0.1;
+      const V_init = 50;
+      const pKaInput = 4.76;
+      const step = 1;
+      
+      let eqVol = (C_acid * V_init) / C_base;
+      const data = calculatepH(type, C_acid, C_base, V_init, pKaInput, step);
+      
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.volumes,
+          datasets: [{
+            label: 'pH',
+            data: data.pH,
+            borderColor: '#e53935',
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: { 
+            y: { min: 0, max: 14, title: { display: true, text: 'pH' } },
+            x: { title: { display: true, text: 'Όγκος προστιθέμενου αντιδραστηρίου (mL)' } }
+          },
+          plugins: {
+            annotation: {
+              annotations: {
+                equivalencePoint: {
+                  type: 'line',
+                  scaleID: 'x',
+                  xMin: eqVol,
+                  xMax: eqVol,
+                  borderColor: '#1e88e5',
+                  borderWidth: 2,
+                  label: { 
+                    content: 'Σημείο Ισοδυναμίας',
+                    enabled: true,
+                    position: 'end'
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Ενημέρωση στοιχείων πίνακα (δειγματικά)
+      document.getElementById('pipet-info').innerText = "70 ml";
+      document.getElementById('beaker-info').innerText = "70 ml";
+    }
+    
+    updateChart();
+  </script>
+  
+  <!-- Scripts για τη λειτουργία του Glass (βασισμένο στο glass.html) -->
+  <script>
+    let pipetteImg, breakerImg;
+    let beakerFill = 0;
+    let dropY;
+    let dropActive = false;
+    let dropSpeed = 5;
+    let bouncing = false;
+    let bounceVelocity = 0;
+    let gravity = 0.5;
+    let bounceCount = 0;
+    let scaleFactorImages = 0.5;
+    let pipetScaledW, pipetScaledH;
+    let breakerScaledW, breakerScaledH;
+    let pipetX, pipetY;
+    let breakerX, breakerY;
+    let initialDropY;
+    let buttonRadius = 15;
+    let buttonCenterX, buttonCenterY;
+    let rippleEffects = [];
+    let sliderInitial, sliderPipet;
+    let labelInitial, labelPipet;
+    let maxLiquid = 140;
+    
+    function preload() {
+      pipetteImg = loadImage('pipet3.png');
+      breakerImg = loadImage('breaker3.png');
+    }
+    
+    function setup() {
+      // Δημιουργία καμβά μέσα στο div του glass (στον αριστερό άξονα της πάνω δεξιάς περιοχής)
+      let container = document.getElementById("glass-canvas-container");
+      let canvasWidth = 300;
+      let canvasHeight = 400;
+      let cnv = createCanvas(canvasWidth, canvasHeight);
+      cnv.parent("glass-canvas-container");
+      
+      pipetScaledW = pipetteImg.width * scaleFactorImages;
+      pipetScaledH = pipetteImg.height * scaleFactorImages;
+      breakerScaledW = breakerImg.width * scaleFactorImages;
+      breakerScaledH = breakerImg.height * scaleFactorImages;
+      
+      pipetX = canvasWidth - pipetScaledW;
+      pipetY = 0;
+      breakerX = canvasWidth - breakerScaledW;
+      breakerY = pipetScaledH;
+      
+      initialDropY = pipetY + pipetScaledH;
+      dropY = initialDropY;
+      
+      buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5 - 8;
+      buttonCenterY = pipetY + buttonRadius + 5 + 15;
+      
+      // Δημιουργία sliders για τις τιμές του pipet και του beaker (χρησιμοποιούνται για ενημέρωση του πίνακα)
+      sliderInitial = createSlider(0, maxLiquid, 70, 1);
+      sliderPipet = createSlider(0, maxLiquid, 70, 1);
+      sliderInitial.parent("glass-canvas-container");
+      sliderInitial.style('position','absolute');
+      sliderInitial.style('z-index','10');
+      sliderInitial.style('transform', 'rotate(-90deg)');
+      sliderInitial.style('left', (breakerX + breakerScaledW + 20 - 80) + 'px');
+      sliderInitial.style('top', (breakerY + breakerScaledH - 40 - 80) + 'px');
+      
+      sliderPipet.parent("glass-canvas-container");
+      sliderPipet.style('position','absolute');
+      sliderPipet.style('z-index','10');
+      sliderPipet.style('transform', 'rotate(-90deg)');
+      sliderPipet.style('left', (pipetX - 50 - 60) + 'px');
+      sliderPipet.style('top', (pipetY + 10 + 80) + 'px');
+      
+      labelInitial = createDiv(sliderInitial.value() + " ml");
+      labelInitial.parent("glass-canvas-container");
+      labelInitial.class("slider-label");
+      labelInitial.position(breakerX + breakerScaledW + 20 - 80, breakerY + breakerScaledH - 40 - 80 - 20);
+      
+      labelPipet = createDiv(sliderPipet.value() + " ml");
+      labelPipet.parent("glass-canvas-container");
+      labelPipet.class("slider-label");
+      labelPipet.position(pipetX - 50 - 60, pipetY + 10 + 80 - 20);
+    }
+    
+    function draw() {
+      background(240);
+      // Σχεδίαση του περιεχομένου του beaker
+      let containerBottom = breakerY + breakerScaledH - 20;
+      let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
+      let drawnLiquidHeight = min(beakerFill, totalTarget);
+      let liquidWidth = breakerScaledW * 0.7 - 9;
+      let liquidX = (breakerX + (breakerScaledW - liquidWidth) / 2) - 13;
+      noStroke();
+      fill(234,234,234);
+      ellipse(liquidX + liquidWidth/2, containerBottom, liquidWidth, liquidWidth * 0.3);
+      fill(234,234,234);
+      rect(liquidX, containerBottom - drawnLiquidHeight, liquidWidth, drawnLiquidHeight);
+      stroke(180);
+      strokeWeight(1);
+      fill(234,234,234);
+      ellipse(liquidX + liquidWidth/2, containerBottom - drawnLiquidHeight, liquidWidth, liquidWidth * 0.3);
+      noStroke();
+      image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
+      
+      let targetY = containerBottom - drawnLiquidHeight;
+      if (dropActive) {
+        if (!bouncing) {
+          dropY += dropSpeed;
+          if (dropY >= targetY) {
+            createRippleEffects(liquidX + liquidWidth/2, targetY, liquidWidth, liquidWidth * 0.3);
+            bouncing = true;
+            bounceVelocity = -2;
+            bounceCount = 1;
+          }
+        } else {
+          dropY += bounceVelocity;
+          bounceVelocity += gravity;
+          if (dropY >= targetY && bounceVelocity > 0) {
+            if (bounceCount === 1) {
+              createRippleEffects(liquidX + liquidWidth/2, targetY, liquidWidth, liquidWidth * 0.3);
+              bounceVelocity = -2;
+              bounceCount++;
+            } else {
+              dropActive = false;
+              bouncing = false;
+              dropY = initialDropY;
+              if (beakerFill < totalTarget) {
+                beakerFill += 3;
+              }
+              let newPipet = max(int(sliderPipet.value()) - 5, 0);
+              sliderPipet.value(newPipet);
+              sliderInitial.value(maxLiquid - newPipet);
+            }
+          }
+        }
+        drawDrop();
+      }
+      image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
+      
+      // Σχεδίαση των ripple effects
+      for (let i = rippleEffects.length - 1; i >= 0; i--) {
+        let r = rippleEffects[i];
+        noFill();
+        stroke(137,137,137, r.alpha);
+        strokeWeight(2);
+        ellipse(r.x, r.y, r.w, r.h);
+        r.w += r.growthRate;
+        r.h += r.growthRate * (r.maxH / r.maxW);
+        r.alpha -= 5;
+        if (r.w >= r.maxW || r.alpha <= 0) {
+          rippleEffects.splice(i,1);
+        }
+      }
+      // Σχεδίαση του κόκκινου κουμπιού "Πάτα!" (παραμένει ενσωματωμένο στο γραφικό του glass)
+      push();
+      drawingContext.shadowOffsetX = 0;
+      drawingContext.shadowOffsetY = 0;
+      drawingContext.shadowBlur = 8;
+      drawingContext.shadowColor = "rgba(0, 0, 0, 0.5)";
+      noStroke();
+      fill(255,0,0);
+      ellipse(buttonCenterX, buttonCenterY, buttonRadius*2, buttonRadius*2);
+      drawingContext.shadowBlur = 0;
+      fill(255);
+      text("Πάτα!", buttonCenterX, buttonCenterY);
+      pop();
+    }
+    
+    function drawDrop() {
+      let dropX = pipetX + pipetScaledW/2 - 50;
+      push();
+      fill(137,137,217,217);
+      noStroke();
+      ellipse(dropX, dropY, 10, 15);
+      pop();
+    }
+    
+    function createRippleEffects(x, y, maxW, maxH) {
+      let count = 3;
+      for (let i = 0; i < count; i++) {
+        rippleEffects.push({
+          x: x,
+          y: y,
+          w: 0,
+          h: 0,
+          maxW: maxW,
+          maxH: maxH,
+          growthRate: 2 + i,
+          alpha: 255
+        });
       }
     }
-    new p5(diagramSketch);
-
-    // Καμβάς για τις οδηγίες/επιλογές (δεξιός πάνω χώρος)
-    let instructionsSketch = function(p) {
-      p.setup = function() {
-        let container = document.getElementById("instructions-container");
-        let canvas = p.createCanvas(container.clientWidth, container.clientHeight);
-        canvas.parent("instructions-container");
-      }
-      p.draw = function() {
-        p.background(240);
-        p.fill(0);
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(18);
-        p.text("Γραφικά του Glass & Επιλογές AcidBase", p.width / 2, 40);
-
-        // Κουμπί "Πάτα!" ενσωματωμένο στον καμβά, στη κάτω δεξιά γωνία
-        p.fill(200, 0, 0);
-        p.noStroke();
-        p.ellipse(p.width - 30, p.height - 30, 50, 50);
-        p.fill(255);
-        p.textSize(12);
-        p.text("Πάτα!", p.width - 30, p.height - 30);
+    
+    function startDrop() {
+      let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
+      if (beakerFill >= totalTarget) return;
+      if (!dropActive) {
+        dropActive = true;
       }
     }
-    new p5(instructionsSketch);
-
-    // Καμβάς για το χώρο μηνυμάτων (κάτω αριστερά)
-    let messagesSketch = function(p) {
-      p.setup = function() {
-        let container = document.getElementById("messages-container");
-        let canvas = p.createCanvas(container.clientWidth, container.clientHeight);
-        canvas.parent("messages-container");
-      }
-      p.draw = function() {
-        p.background(220);
-        p.fill(0);
-        p.textAlign(p.LEFT, p.CENTER);
-        p.textSize(16);
-        p.text("Μηνύματα / Οδηγίες", 10, p.height / 2);
+    
+    // Ενεργοποίηση του red "Πάτα!" κουμπιού στο γραφικό του glass
+    function mousePressed() {
+      let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
+      if (beakerFill >= totalTarget) return;
+      if (dist(mouseX, mouseY, buttonCenterX, buttonCenterY) < buttonRadius) {
+        startDrop();
       }
     }
-    new p5(messagesSketch);
-
-    // Καμβάς για τα επιπλέον κουμπιά (κάτω δεξιά)
-    let buttonsSketch = function(p) {
-      p.setup = function() {
-        let container = document.getElementById("buttons-container");
-        let canvas = p.createCanvas(container.clientWidth, container.clientHeight);
-        canvas.parent("buttons-container");
-      }
-      p.draw = function() {
-        p.background(200);
-        p.fill(0);
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(18);
-        p.text("Επιπλέον Κουμπιά", p.width / 2, p.height / 2);
-      }
-    }
-    new p5(buttonsSketch);
+  </script>
+  
+  <!-- Λειτουργίες κουμπιών που βρίσκονται στην κάτω δεξιά περιοχή -->
+  <script>
+    document.getElementById('resetAcidbase').addEventListener('click', function(){
+      updateChart();
+    });
+    document.getElementById('resetGlass').addEventListener('click', function(){
+      beakerFill = int(sliderInitial.value());
+      dropY = initialDropY;
+      dropActive = false;
+      bouncing = false;
+      rippleEffects = [];
+    });
   </script>
 </body>
 </html>
