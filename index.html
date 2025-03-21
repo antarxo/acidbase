@@ -14,9 +14,9 @@
 
     /* Στυλ για τα συρτάρια */
     .drawer {
-      width: 250px;
+      width: 300px; /* Μεγαλύτερο πλάτος */
       position: fixed;
-      right: -245px; /* Κρυμμένο εκτός αφήνοντας 5px του κουμπιού */
+      right: -295px; /* Κρύβεται αφήνοντας 5px για το κουμπί */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -53,9 +53,9 @@
   <script>
     class Drawer {
       constructor(options) {
-        this.width = options.width || 250;
+        this.width = options.width || 300; // Νέο πλάτος
         this.top = options.top || '50px';
-        this.height = options.height || '300px';
+        this.height = options.height || '140px'; // Νέο ύψος
         this.content = options.content || '';
         this.buttonLabel = options.buttonLabel || '|||';
 
@@ -86,15 +86,15 @@
 
       // Δημιουργία πρώτου συρταριού
       drawer1 = new Drawer({
-        top: '100px',
-        height: '250px',
+        top: '100px',   // Θέση του πρώτου συρταριού
+        height: '140px', // Ύψος του πρώτου συρταριού
         content: '<h3>Συρτάρι 1</h3><p>Περιεχόμενο.</p>'
       });
 
-      // Δημιουργία δεύτερου συρταριού
+      // Δημιουργία δεύτερου συρταριού κολλητά στο πρώτο
       drawer2 = new Drawer({
-        top: '400px',
-        height: '250px',
+        top: '240px',  // Θέση του δεύτερου συρταριού ακριβώς κάτω από το πρώτο
+        height: '140px', // Ύψος του δεύτερου συρταριού
         content: '<h3>Συρτάρι 2</h3><p>Άλλο περιεχόμενο.</p>'
       });
     }
