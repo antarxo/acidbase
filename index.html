@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
-    /* Γενικές ρυθμίσεις */
+    /* Γενικές ρυθμίσεις (όπως στο layout.html) */
     body {
       margin: 0;
       padding: 20px;
@@ -18,7 +18,7 @@
       grid-template-rows: 70% 30%;
       grid-template-areas:
         "diagram instructions"
-        "messages buttons";
+        "messages messages";
       gap: 20px;
       font-family: Arial, sans-serif;
       box-sizing: border-box;
@@ -31,21 +31,69 @@
     }
     /* Περιοχές */
     #diagram-container { grid-area: diagram; }
+    /* Στην πάνω δεξιά περιοχή, διαχωρίζουμε σε δύο στήλες */
     #instructions-container {
       grid-area: instructions;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
-    #messages-container { grid-area: messages; }
-    #buttons-container { grid-area: buttons; }
-    /* Στυλ για το γραφικό του glass */
-    #glass-container {
+    /* Κάτω περιοχή: μηνύματα & κουμπιά όπως στο αρχικό layout */
+    #bottom-container {
+      grid-area: messages;
+      display: flex;
+      width: 100%;
+      gap: 20px;
+    }
+    #messages-container {
+      flex: 3;
+    }
+    #buttons-container {
+      flex: 1;
+    }
+    /* Στυλ για το γραφικό του Glass (αριστερή στήλη του instructions) */
+    #glass-column {
       border: 1px solid #ccc;
       position: relative;
       min-height: 400px;
+      /* Ορίζουμε πλάτος μικρότερο ώστε να μην καταλαμβάνει πολύ χώρο */
+      max-width: 250px;
+      margin: auto;
     }
-    /* Στυλ για τον πίνακα λύσεων */
+    /* Στυλ για το param-box του AcidBase (δεξιά στήλη του instructions) */
+    #acidbase-params {
+      border: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    /* Στυλ για τα γραφικά στοιχεία διαλυμάτων μέσα στο AcidBase */
+    .graphics-container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    .graphic-element {
+      text-align: center;
+    }
+    .graphic-element .glass-container {
+      position: relative;
+      width: 80px;
+      height: 140px;
+      border: 2px solid #333;
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+      background: #fff;
+      margin: 0 auto;
+    }
+    .graphic-element .glass-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(30, 136, 229, 0.6);
+      transition: height 0.5s ease;
+    }
+    /* Στυλ για τον πίνακα λύσεων (αν θέλετε επιπλέον πληροφορίες) */
     #solution-table {
       width: 100%;
       border-collapse: collapse;
@@ -64,43 +112,102 @@
     <canvas id="titrationChart"></canvas>
   </div>
   
-  <!-- Πάνω Δεξιά Περιοχή: Διαχωρισμένη σε δύο στήλες -->
+  <!-- Πάνω Δεξιά Περιοχή: Διαιρεμένη σε δύο στήλες -->
   <div id="instructions-container" class="section">
-    <!-- Αριστερή στήλη: Γραφικό του Glass -->
+    <!-- Αριστερή στήλη: Γραφικό του Glass (με μειωμένο πλάτος) -->
     <div id="glass-column">
       <div id="glass-canvas-container"></div>
     </div>
-    <!-- Δεξιά στήλη: Πίνακας στοιχείων για το pipet και το beaker -->
-    <div id="table-column">
+    <!-- Δεξιά στήλη: Στοιχεία & επιλογείς για τα διαλύματα του AcidBase -->
+    <div id="acidbase-params">
+      <h3>Παράμετροι & Διαλύματα</h3>
+      <!-- Γραφικά διαλυμάτων (όπως στο acidebase.html) -->
+      <div class="graphics-container">
+        <!-- Γραφικό ποτήρι -->
+        <div class="graphic-element">
+          <div class="glass-container">
+            <div id="paramGlassFill" class="glass-fill" style="height: 0%;"></div>
+          </div>
+          <div>
+            <label for="glassSolution">Διάλυμα:</label>
+            <select id="glassSolution">
+              <option value="διάλυμα 1">1</option>
+              <option value="διάλυμα 2">2</option>
+              <option value="διάλυμα 3">3</option>
+            </select>
+          </div>
+        </div>
+        <!-- Γραφικό προχοΐδας -->
+        <div class="graphic-element">
+          <div class="dropper-container" style="display:flex; flex-direction:column; align-items:center;">
+            <div id="dropperGraphic" style="width:30px; height:90px; background:#ccc; border:2px solid #333; border-radius:15px; margin-bottom:5px;"></div>
+            <div>
+              <label for="dropperSolution">Διάλυμα:</label>
+              <select id="dropperSolution">
+                <option value="διάλυμα Α">Α</option>
+                <option value="διάλυμα Β">Β</option>
+                <option value="διάλυμα Γ">Γ</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Περισσότερες παραμέτρους του AcidBase -->
+      <div>
+        <label for="analysisType">Τύπος Ανάλυσης:</label>
+        <select id="analysisType" onchange="updateChart(); updateLabel();">
+          <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
+          <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
+          <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
+          <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
+        </select>
+        <br><br>
+        <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
+        <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
+        <br>
+        <label for="concBase">Συγκέντρωση Βάσης (M):</label>
+        <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
+        <br>
+        <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
+        <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
+        <br>
+        <label for="pKa" id="pKaLabel">pKa:</label>
+        <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
+        <br><br>
+        <label for="stepSize">Βήμα προσθήκης (mL):</label>
+        <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
+        <br><br>
+        <button onclick="resetAcidbase()">Επαναφορά</button>
+      </div>
+      <!-- Προαιρετικά: πίνακας με επιπλέον πληροφορίες διαλυμάτων -->
+      <br>
       <table id="solution-table">
         <tr>
           <th>Pipet Διάλυμα</th>
-        </tr>
-        <tr>
-          <td id="pipet-info">70 ml</td>
-        </tr>
-        <tr>
           <th>Beaker Διάλυμα</th>
         </tr>
         <tr>
+          <td id="pipet-info">70 ml</td>
           <td id="beaker-info">70 ml</td>
         </tr>
       </table>
     </div>
   </div>
   
-  <!-- Κάτω Αριστερή Περιοχή: (Μηνύματα) - προς το παρόν κενή -->
-  <div id="messages-container" class="section">
-    <!-- Δεν έχει τοποθετηθεί περιεχόμενο -->
+  <!-- Κάτω Περιοχή: Μηνύματα (75%) & Κουμπιά (25%) όπως στο layout αρχικής έκδοσης -->
+  <div id="bottom-container">
+    <div id="messages-container" class="section">
+      <!-- Εδώ μπορεί να τοποθετηθεί περιεχόμενο μηνυμάτων/οδηγιών -->
+      <p>Μηνύματα / Οδηγίες</p>
+    </div>
+    <div id="buttons-container" class="section">
+      <!-- Κουμπιά εκτός του κόκκινου του glass -->
+      <button onclick="resetGlass()">Επαναφορά Glass</button>
+      <button onclick="resetAcidbase()">Επαναφορά AcidBase</button>
+    </div>
   </div>
   
-  <!-- Κάτω Δεξιά Περιοχή: Κουμπιά (εκτός του κόκκινου κουμπιού του glass) -->
-  <div id="buttons-container" class="section">
-    <button id="resetAcidbase">Επαναφορά AcidBase</button>
-    <button id="resetGlass">Επαναφορά Glass</button>
-  </div>
-  
-  <!-- Scripts για το AcidBase διάγραμμα (βασισμένο στο acidebase.html) -->
+  <!-- Scripts για το AcidBase διάγραμμα (Chart.js) -->
   <script>
     let chart;
     const ctx = document.getElementById('titrationChart').getContext('2d');
@@ -179,13 +286,19 @@
     }
     
     function updateChart() {
-      // Χρήση προκαθορισμένων τιμών για επίδειξη
-      const type = "strong_acid_strong_base";
-      const C_acid = 0.1;
-      const C_base = 0.1;
-      const V_init = 50;
-      const pKaInput = 4.76;
-      const step = 1;
+      // Παράδειγμα τιμών για επίδειξη
+      const type = document.getElementById('analysisType').value;
+      const C_acid = parseFloat(document.getElementById('concAcid').value);
+      const C_base = parseFloat(document.getElementById('concBase').value);
+      const V_init = parseFloat(document.getElementById('volumeAcid').value);
+      const pKaInput = parseFloat(document.getElementById('pKa').value);
+      const step = parseFloat(document.getElementById('stepSize').value);
+      
+      if (type === "weak_acid_strong_base" || type === "strong_acid_weak_base") {
+        document.getElementById('pKa').disabled = false;
+      } else {
+        document.getElementById('pKa').disabled = true;
+      }
       
       let eqVol = (C_acid * V_init) / C_base;
       const data = calculatepH(type, C_acid, C_base, V_init, pKaInput, step);
@@ -229,15 +342,34 @@
         }
       });
       
-      // Ενημέρωση στοιχείων πίνακα (δειγματικά)
+      // Ενημέρωση στοιχείων πίνακα διαλυμάτων (παράδειγμα)
       document.getElementById('pipet-info').innerText = "70 ml";
       document.getElementById('beaker-info').innerText = "70 ml";
     }
     
+    function updateLabel() {
+      const type = document.getElementById('analysisType').value;
+      const label = document.getElementById('pKaLabel');
+      label.textContent = (type === "strong_acid_weak_base") ? "pKb:" : "pKa:";
+    }
+    
+    function resetAcidbase() {
+      document.getElementById('concAcid').value = 0.1;
+      document.getElementById('concBase').value = 0.1;
+      document.getElementById('volumeAcid').value = 50;
+      document.getElementById('pKa').value = 4.76;
+      document.getElementById('stepSize').value = 1;
+      updateChart();
+      updateLabel();
+      // Ενημέρωση του "γεμίσματος" στο param γραφικό (για επίδειξη)
+      document.getElementById('paramGlassFill').style.height = "0%";
+    }
+    
+    updateLabel();
     updateChart();
   </script>
   
-  <!-- Scripts για τη λειτουργία του Glass (βασισμένο στο glass.html) -->
+  <!-- Scripts για το γραφικό του Glass (p5.js) -->
   <script>
     let pipetteImg, breakerImg;
     let beakerFill = 0;
@@ -267,10 +399,10 @@
     }
     
     function setup() {
-      // Δημιουργία καμβά μέσα στο div του glass (στον αριστερό άξονα της πάνω δεξιάς περιοχής)
+      // Δημιουργούμε καμβά με σταθερό πλάτος (π.χ. 250px) στο div του glass
       let container = document.getElementById("glass-canvas-container");
-      let canvasWidth = 300;
-      let canvasHeight = 400;
+      let canvasWidth = 250;
+      let canvasHeight = 350;
       let cnv = createCanvas(canvasWidth, canvasHeight);
       cnv.parent("glass-canvas-container");
       
@@ -290,7 +422,7 @@
       buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5 - 8;
       buttonCenterY = pipetY + buttonRadius + 5 + 15;
       
-      // Δημιουργία sliders για τις τιμές του pipet και του beaker (χρησιμοποιούνται για ενημέρωση του πίνακα)
+      // Δημιουργία sliders για τις τιμές του pipet και του beaker, ώστε να ενημερώνουν και το table (μέσα στο γραφικό του glass)
       sliderInitial = createSlider(0, maxLiquid, 70, 1);
       sliderPipet = createSlider(0, maxLiquid, 70, 1);
       sliderInitial.parent("glass-canvas-container");
@@ -316,6 +448,31 @@
       labelPipet.parent("glass-canvas-container");
       labelPipet.class("slider-label");
       labelPipet.position(pipetX - 50 - 60, pipetY + 10 + 80 - 20);
+      
+      // Σύνδεση των sliders ώστε το άθροισμα να παραμένει σταθερό
+      let updateLock = false;
+      sliderInitial.input(function() {
+        if (!updateLock) {
+          updateLock = true;
+          let initialVal = int(sliderInitial.value());
+          sliderPipet.value(maxLiquid - initialVal);
+          beakerFill = initialVal;
+          labelInitial.html(initialVal + " ml");
+          labelPipet.html(int(sliderPipet.value()) + " ml");
+          updateLock = false;
+        }
+      });
+      
+      sliderPipet.input(function() {
+        if (!updateLock) {
+          updateLock = true;
+          let pipetVal = int(sliderPipet.value());
+          sliderInitial.value(maxLiquid - pipetVal);
+          labelPipet.html(pipetVal + " ml");
+          labelInitial.html(int(sliderInitial.value()) + " ml");
+          updateLock = false;
+        }
+      });
     }
     
     function draw() {
@@ -387,7 +544,7 @@
           rippleEffects.splice(i,1);
         }
       }
-      // Σχεδίαση του κόκκινου κουμπιού "Πάτα!" (παραμένει ενσωματωμένο στο γραφικό του glass)
+      // Σχεδίαση του κόκκινου κουμπιού "Πάτα!" που παραμένει στο γραφικό του glass
       push();
       drawingContext.shadowOffsetX = 0;
       drawingContext.shadowOffsetY = 0;
@@ -445,18 +602,15 @@
     }
   </script>
   
-  <!-- Λειτουργίες κουμπιών που βρίσκονται στην κάτω δεξιά περιοχή -->
+  <!-- Λειτουργίες κουμπιών (κάτω δεξιά περιοχή) -->
   <script>
-    document.getElementById('resetAcidbase').addEventListener('click', function(){
-      updateChart();
-    });
-    document.getElementById('resetGlass').addEventListener('click', function(){
+    function resetGlass() {
       beakerFill = int(sliderInitial.value());
       dropY = initialDropY;
       dropActive = false;
       bouncing = false;
       rippleEffects = [];
-    });
+    }
   </script>
 </body>
 </html>
