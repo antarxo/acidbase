@@ -2,63 +2,55 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Διάταξη χωρίς Κύλιση - Δεξί Πάνελ με Πίνακα</title>
+  <title>Διάταξη με Δύο Panels - Τροποποιημένη</title>
   <!-- Εξωτερικές βιβλιοθήκες -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
-    /* Γενικές ρυθμίσεις με περιθώριο 20px γύρω από το περιεχόμενο */
     html, body {
       margin: 0;
-      padding: 20px;
-      height: calc(100vh - 40px);
-      width: calc(100vw - 40px);
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
       box-sizing: border-box;
       background-color: #f9f9f9;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
     }
-    /* Διαχωρισμός σε δύο στήλες: αριστερό 60% και δεξί 40% με gap 20px */
+    /* Χωρίζουμε το σώμα σε 2 στήλες: αριστερό 45% και δεξί 55% */
     body {
       display: grid;
-      grid-template-columns: 60% 40%;
-      gap: 20px;
+      grid-template-columns: 45% 55%;
+      grid-template-rows: 100%;
     }
-    /* Αριστερό πάνελ */
+    /* Αριστερό panel: Διάγραμμα στην επάνω περιοχή και μηνύματα/κουμπιά στην κάτω */
     #left-container {
-      height: 100%;
+      display: grid;
+      grid-template-rows: 70% 30%;
       padding: 20px;
       gap: 20px;
-      display: grid;
-      /* Χωρίζουμε σε 2 σειρές: 65% για το διάγραμμα και 35% για μηνύματα/κουμπιά */
-      grid-template-rows: 65% 35%;
-      overflow: hidden;
+      overflow: auto;
     }
-    /* Container διαγράμματος Chart.js */
     #diagram-container {
       border: 1px solid #ccc;
       background-color: #fff;
       padding: 10px;
-      height: 100%;
-      box-sizing: border-box;
-      margin-bottom: 20px;
     }
-    /* Κάτω μέρος αριστερού πάνελ (μηνύματα & κουμπιά) */
+    /* Κάτω περιοχή αριστερού panel */
     #bottom-container {
       display: flex;
       gap: 20px;
-      height: 100%;
     }
-    #messages-container,
+    #messages-container {
+      flex: 3;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      padding: 10px;
+    }
     #buttons-container {
       flex: 1;
       border: 1px solid #ccc;
       background-color: #fff;
       padding: 10px;
-      overflow: auto;
-    }
-    #buttons-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
       gap: 10px;
@@ -76,64 +68,56 @@
     #buttons-container button:hover {
       background-color: #45a049;
     }
-    /* Δεξί πάνελ: padding-right 20px για περιθώριο στα δεξιά */
+    /* Δεξί panel: Καταλαμβάνει το 100% ύψος της σελίδας */
     #right-container {
-      height: 100%;
+      height: 100vh;
       padding: 20px;
-      padding-right: 20px;
-      overflow: hidden;
+      overflow-y: auto;
       border-left: 1px solid #ccc;
       background-color: #fff;
     }
-    /* Container οδηγιών στο δεξί πάνελ χωρίζεται σε 2 στήλες */
+    /* Το instructions panel στο δεξί πάνελ χωρίζεται σε 2 στήλες */
     #instructions-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       height: 100%;
     }
-    /* Στήλη για το γραφικό του Glass (p5.js) */
+    /* Αριστερή στήλη του instructions: Γραφικό του Glass */
     #glass-column {
       border: 1px solid #ccc;
       position: relative;
-      height: 100%;
+      min-height: 600px;
       width: 100%;
-      overflow: hidden;
     }
-    /* Προσθήκη margin-bottom 20px για τα κατώτερα όρια των καμβάδων */
-    #diagram-container, #glass-canvas-container {
-      margin-bottom: 20px;
-    }
-    /* Στήλη για τους επιλογείς AcidBase: πίνακας */
+    /* Δεξιά στήλη: Επιλογείς AcidBase (αφαιρέσαμε τον τίτλο και τον πίνακα τελικών τιμών) */
     #acidbase-params {
       border: 1px solid #ccc;
       padding: 10px;
+      overflow-y: auto;
       height: 100%;
-      box-sizing: border-box;
-      overflow: auto;
     }
-    /* Στυλ για τον πίνακα στο δεξί πάνελ */
-    #acidbase-params table {
+    #acidbase-params label {
+      display: block;
+      margin-top: 10px;
+    }
+    #acidbase-params input,
+    #acidbase-params select {
       width: 100%;
-      border-collapse: collapse;
-    }
-    #acidbase-params th,
-    #acidbase-params td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      vertical-align: top;
-      font-size: 13px;
+      padding: 5px;
+      margin-top: 5px;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <!-- Αριστερό πάνελ -->
+  <!-- Αριστερό Panel -->
   <div id="left-container">
-    <!-- Διάγραμμα Chart.js -->
+    <!-- Διάγραμμα -->
     <div id="diagram-container">
       <canvas id="titrationChart"></canvas>
     </div>
-    <!-- Κάτω μέρος: μηνύματα & κουμπιά -->
+    <!-- Κάτω περιοχή: Μηνύματα και Κουμπιά -->
     <div id="bottom-container">
       <div id="messages-container">
         <p>Μηνύματα / Οδηγίες</p>
@@ -149,61 +133,42 @@
     </div>
   </div>
   
-  <!-- Δεξί πάνελ -->
+  <!-- Δεξί Panel -->
   <div id="right-container">
     <div id="instructions-container">
-      <!-- Στήλη για το γραφικό του Glass (p5.js) -->
+      <!-- Αριστερή στήλη: Γραφικό του Glass -->
       <div id="glass-column">
-        <!-- Container του p5.js καμβά -->
-        <div id="glass-canvas-container" style="width:100%; height:100%;"></div>
+        <div id="glass-canvas-container"></div>
       </div>
-      <!-- Στήλη για τους επιλογείς AcidBase με πίνακα -->
+      <!-- Δεξιά στήλη: Επιλογείς AcidBase (χωρίς επιπλέον περιεχόμενο) -->
       <div id="acidbase-params">
-        <table>
-          <tr>
-            <!-- Πρώτη στήλη συγχωνευμένη σε 2 σειρές: περιέχει το γραφικό -->
-            <td rowspan="2">
-              <!-- Εδώ τοποθετείται το γραφικό (π.χ. εικόνα ή άλλο περιεχόμενο) -->
-              <strong>Γραφικό:</strong>
-              <div style="width:100%; height:150px; background:#eee; text-align:center; line-height:150px;">
-                [Εικόνα]
-              </div>
-            </td>
-            <!-- Δεύτερη στήλη, πρώτη σειρά: ρυθμίσεις 1 -->
-            <td>
-              <label for="analysisType">Τύπος Ανάλυσης:</label>
-              <select id="analysisType" onchange="updateChart(); updateLabel();">
-                <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
-                <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-                <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
-                <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <!-- Δεύτερη σειρά, δεύτερη στήλη: ρυθμίσεις 2 -->
-            <td>
-              <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
-              <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
-              <label for="concBase">Συγκέντρωση Βάσης (M):</label>
-              <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
-              <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
-              <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
-              <label for="pKa" id="pKaLabel">pKa:</label>
-              <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
-              <label for="stepSize">Βήμα προσθήκης (mL):</label>
-              <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
-              <br><br>
-              <button onclick="resetAcidbase()">Επαναφορά</button>
-            </td>
-          </tr>
-          <tr>
-            <!-- Τρίτη σειρά: συγχωνευμένα κελιά (colspan="2") για μελλοντικό περιεχόμενο -->
-            <td colspan="2">
-              <p><em>Εδώ θα τοποθετηθούν πρόσθετα περιεχόμενα που θα συζητηθούν στη συνέχεια.</em></p>
-            </td>
-          </tr>
-        </table>
+        <div>
+          <label for="analysisType">Τύπος Ανάλυσης:</label>
+          <select id="analysisType" onchange="updateChart(); updateLabel();">
+            <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
+            <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
+            <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
+            <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
+          </select>
+          
+          <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
+          <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
+          
+          <label for="concBase">Συγκέντρωση Βάσης (M):</label>
+          <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
+          
+          <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
+          <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
+          
+          <label for="pKa" id="pKaLabel">pKa:</label>
+          <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
+          
+          <label for="stepSize">Βήμα προσθήκης (mL):</label>
+          <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
+          
+          <br><br>
+          <button onclick="resetAcidbase()">Επαναφορά</button>
+        </div>
       </div>
     </div>
   </div>
@@ -316,8 +281,6 @@
           }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
           scales: { 
             y: { min: 0, max: 14, title: { display: true, text: 'pH' } },
             x: { title: { display: true, text: 'Όγκος προστιθέμενου αντιδραστηρίου (mL)' } }
@@ -378,10 +341,9 @@
     }
     
     function setup() {
-      // Προσαρμογή του καμβά στις διαστάσεις του container
       let container = document.getElementById("glass-canvas-container");
-      let canvasWidth = container.offsetWidth;
-      let canvasHeight = container.offsetHeight;
+      let canvasWidth = 250;
+      let canvasHeight = 600;
       let cnv = createCanvas(canvasWidth, canvasHeight);
       cnv.parent("glass-canvas-container");
       
@@ -390,7 +352,6 @@
       breakerScaledW = breakerImg.width * scaleFactorImages;
       breakerScaledH = breakerImg.height * scaleFactorImages;
       
-      // Τοποθέτηση στοιχείων βάσει διαστάσεων καμβά
       pipetX = canvasWidth - pipetScaledW;
       pipetY = 0;
       breakerX = canvasWidth - breakerScaledW;
@@ -454,7 +415,7 @@
     }
     
     function draw() {
-      background(255);
+      background(240);
       let containerBottom = breakerY + breakerScaledH - 20;
       let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
       let drawnLiquidHeight = min(beakerFill, totalTarget);
