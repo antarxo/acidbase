@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση - Rescaling & Ευθυγράμμιση</title>
+  <title>Προσομοίωση - Rescaling, Ευθυγράμμιση & Τροποποιημένες Σταγόνες</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -26,7 +26,7 @@
   <script>
     let pipetteImg, breakerImg;
     
-    // Η μεταβλητή beakerFill αυξάνεται κατά 3 κάθε φορά (αυτός ο αριθμός "αθροίζεται")
+    // Η μεταβλητή beakerFill αυξάνεται κατά 3 κάθε φορά
     let beakerFill = 0;
     let dropY;
     let dropActive = false;
@@ -77,7 +77,7 @@
       initialDropY = pipetBottom;
       dropY = initialDropY;
       
-      // Ορίζουμε το κόκκινο κουμπί σχετικά με την pipet – μετατοπισμένο αριστερότερα κατά 8 pixels
+      // Ορισμός του κόκκινου κουμπιού (με μετατόπιση αριστερότερα κατά 8 pixels)
       buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5 - 8;
       buttonCenterY = pipetY + buttonRadius + 5 + 15;
       
@@ -92,14 +92,13 @@
     function draw() {
       background(240);
       
-      // Ορίζουμε το "ποτήρι" με βάση την εικόνα breaker.
-      // containerBottom: κάτω σημείο του ποτηριού (με offset 20 pixels πάνω από το κάτω μέρος της εικόνας)
+      // Ορίζουμε το "ποτήρι" βάσει της εικόνας breaker.
       let containerBottom = breakerY + breakerScaledH - 20;
-      // Το μέγιστο ορατό ύψος του υγρού ορίζεται στο 65% του ύψους του breaker
+      // Το μέγιστο ορατό ύψος του υγρού είναι το 65% του ύψους του breaker
       let maxLiquidHeight = breakerScaledH * 0.65;
       let containerTop = containerBottom - maxLiquidHeight;
       
-      // Το ορατό ύψος του υγρού είναι το ελάχιστο μεταξύ της συσσωρευμένης τιμής και του maxLiquidHeight
+      // Το ορατό ύψος του υγρού είναι το ελάχιστο μεταξύ του συσσωρευμένου beakerFill και του maxLiquidHeight
       let drawnLiquidHeight = min(beakerFill, maxLiquidHeight);
       
       // Ορισμός πλάτους και θέσης του υγρού μέσα στο ποτήρι
@@ -150,7 +149,6 @@
       
       // Σχεδίαση του κόκκινου κουμπιού με πλήρη σκιά και ετικέτα "Πάτα!"
       push();
-      // Ρυθμίσεις σκιάς: από όλες τις πλευρές (offset 0, ομοιόμορφη σκιά)
       drawingContext.shadowOffsetX = 0;
       drawingContext.shadowOffsetY = 0;
       drawingContext.shadowBlur = 8;
@@ -160,18 +158,21 @@
       fill(255, 0, 0);
       ellipse(buttonCenterX, buttonCenterY, buttonRadius * 2, buttonRadius * 2);
       
-      // Απενεργοποίηση της σκιάς για το κείμενο
       drawingContext.shadowBlur = 0;
       fill(255);
       text("Πάτα!", buttonCenterX, buttonCenterY);
       pop();
     }
     
+    // Τροποποιημένη συνάρτηση σχεδίασης της σταγόνας:
+    // Το σημείο εκκίνησης της σταγόνας μετατοπίζεται 50 pixels πιο αριστερά
+    // και το χρώμα της είναι #898989 με opacity περίπου 85% (alpha 217 σε p5.js)
     function drawDrop() {
       push();
-      fill(234, 234, 234);
+      fill(137, 137, 137, 217);
       noStroke();
-      ellipse(pipetX + pipetScaledW / 2, dropY, 10, 15);
+      // Η σταγόνα ξεκινά από pipetX + pipetScaledW/2 - 50
+      ellipse(pipetX + pipetScaledW / 2 - 50, dropY, 10, 15);
       pop();
     }
     
