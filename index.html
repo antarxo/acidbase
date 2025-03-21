@@ -16,10 +16,10 @@
       box-sizing: border-box;
       background-color: #f9f9f9;
     }
-    /* Χωρίζουμε το σώμα σε 2 στήλες: αριστερό 45% και δεξί 55% */
+    /* Χωρίζουμε το σώμα σε 2 στήλες: αριστερό 60% και δεξί 40% */
     body {
       display: grid;
-      grid-template-columns: 45% 55%;
+      grid-template-columns: 60% 40%;
       grid-template-rows: 100%;
     }
     /* Αριστερό panel: Διάγραμμα στην επάνω περιοχή και μηνύματα/κουμπιά στην κάτω */
@@ -107,6 +107,10 @@
       padding: 5px;
       margin-top: 5px;
       box-sizing: border-box;
+    }
+    /* Ορισμός μεγέθους γραμματοσειράς για τις ετικέτες στο p5.js */
+    .slider-label {
+      font-size: 13px;
     }
   </style>
 </head>
@@ -415,7 +419,7 @@
     }
     
     function draw() {
-      background(240);
+      background(255);
       let containerBottom = breakerY + breakerScaledH - 20;
       let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
       let drawnLiquidHeight = min(beakerFill, totalTarget);
