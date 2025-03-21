@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Διάταξη χωρίς Κύλιση - Τροποποιημένη</title>
+  <title>Διάταξη χωρίς Κύλιση - Τροποποιημένη με Πίνακα</title>
   <!-- Εξωτερικές βιβλιοθήκες -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -19,13 +19,13 @@
       overflow: hidden;
       font-family: Arial, sans-serif;
     }
-    /* Χωρίζουμε το σώμα σε 2 στήλες: αριστερό 60% και δεξί 40% */
+    /* Χωρίζουμε το σώμα σε 2 στήλες: αριστερό 60% και δεξί 40% με gap 20px */
     body {
       display: grid;
       grid-template-columns: 60% 40%;
       gap: 20px;
     }
-    /* Αριστερό Panel - ύψος ως το διαθέσιμο ύψος της περιοχής (χωρίς τα padding της σελίδας) */
+    /* Αριστερό Panel - ύψος ως το διαθέσιμο ύψος της περιοχής */
     #left-container {
       height: 100%;
       padding: 20px;
@@ -35,7 +35,7 @@
       grid-template-rows: 65% 35%;
       overflow: hidden;
     }
-    /* Διάγραμμα Chart.js: προστίθεται margin-bottom για να μην φτάνει στο κάτω άκρο */
+    /* Διάγραμμα Chart.js: προστίθεται margin-bottom για περιθώριο 20px στο κάτω μέρος */
     #diagram-container {
       border: 1px solid #ccc;
       background-color: #fff;
@@ -76,7 +76,7 @@
     #buttons-container button:hover {
       background-color: #45a049;
     }
-    /* Δεξί Panel: προστίθεται padding-right 20px ώστε να υπάρχει περιθώριο από τα δεξιά */
+    /* Δεξί Panel: padding-right 20px για περιθώριο από τα δεξιά */
     #right-container {
       height: 100%;
       padding: 20px;
@@ -85,7 +85,7 @@
       border-left: 1px solid #ccc;
       background-color: #fff;
     }
-    /* Container οδηγιών με 2 στήλες */
+    /* Container οδηγιών: Χωρίζουμε το δεξί πάνελ σε δύο στήλες */
     #instructions-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -100,11 +100,11 @@
       width: 100%;
       overflow: hidden;
     }
-    /* Προσθέτουμε margin-bottom 20px και στα δύο containers που φιλοξενούν καμβάδες */
+    /* Προσθέτουμε margin-bottom 20px για να έχουμε περιθώριο στο κάτω μέρος των καμβάδων */
     #diagram-container, #glass-canvas-container {
       margin-bottom: 20px;
     }
-    /* Στήλη για τους επιλογείς AcidBase */
+    /* Στήλη για τους επιλογείς AcidBase με πίνακα */
     #acidbase-params {
       border: 1px solid #ccc;
       padding: 10px;
@@ -112,22 +112,16 @@
       box-sizing: border-box;
       overflow: auto;
     }
-    /* Όλες οι ετικέτες στο δεξί πάνελ να έχουν μέγεθος 13px */
-    #acidbase-params label {
-      display: block;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-    #acidbase-params input,
-    #acidbase-params select {
+    /* Στυλ για τον πίνακα: */
+    #acidbase-params table {
       width: 100%;
-      padding: 5px;
-      margin-top: 5px;
-      box-sizing: border-box;
-      font-size: 13px;
+      border-collapse: collapse;
     }
-    /* Ετικέτες του p5.js */
-    .slider-label {
+    #acidbase-params th, 
+    #acidbase-params td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      vertical-align: top;
       font-size: 13px;
     }
   </style>
@@ -163,35 +157,52 @@
         <!-- Container του p5.js καμβά -->
         <div id="glass-canvas-container" style="width:100%; height:100%;"></div>
       </div>
-      <!-- Στήλη για τους επιλογείς AcidBase -->
+      <!-- Στήλη για τους επιλογείς AcidBase με πίνακα -->
       <div id="acidbase-params">
-        <div>
-          <label for="analysisType">Τύπος Ανάλυσης:</label>
-          <select id="analysisType" onchange="updateChart(); updateLabel();">
-            <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
-            <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
-            <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
-            <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
-          </select>
-          
-          <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
-          <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
-          
-          <label for="concBase">Συγκέντρωση Βάσης (M):</label>
-          <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
-          
-          <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
-          <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
-          
-          <label for="pKa" id="pKaLabel">pKa:</label>
-          <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
-          
-          <label for="stepSize">Βήμα προσθήκης (mL):</label>
-          <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
-          
-          <br><br>
-          <button onclick="resetAcidbase()">Επαναφορά</button>
-        </div>
+        <table>
+          <tr>
+            <!-- Πρώτο κελί: Συγχωνευμένη πρώτη στήλη που καλύπτει 2 σειρές -->
+            <td rowspan="2">
+              <!-- Περιεχόμενο για την πρώτη στήλη (π.χ. οδηγίες ή σταθερό κείμενο) -->
+              <strong>Πληροφορίες:</strong>
+              <p>Εδώ μπορείτε να βάλετε οδηγίες ή άλλο περιεχόμενο.</p>
+            </td>
+            <!-- Δεύτερο κελί, πρώτη σειρά, δεύτερη στήλη: ρυθμίσεις -->
+            <td>
+              <label for="analysisType">Τύπος Ανάλυσης:</label>
+              <select id="analysisType" onchange="updateChart(); updateLabel();">
+                <option value="strong_acid_strong_base">Ισχυρό Οξύ + Ισχυρή Βάση</option>
+                <option value="weak_acid_strong_base">Ασθενές Οξύ + Ισχυρή Βάση</option>
+                <option value="strong_acid_weak_base">Ισχυρό Οξύ + Ασθενή Βάση</option>
+                <option value="strong_base_strong_acid">Ισχυρή Βάση + Ισχυρό Οξύ</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <!-- Δεύτερη σειρά, δεύτερη στήλη: ρυθμίσεις -->
+            <td>
+              <label for="concAcid">Συγκέντρωση Οξέος (M):</label>
+              <input type="number" id="concAcid" value="0.1" step="0.01" onchange="updateChart()">
+              <label for="concBase">Συγκέντρωση Βάσης (M):</label>
+              <input type="number" id="concBase" value="0.1" step="0.01" onchange="updateChart()">
+              <label for="volumeAcid">Όγκος αρχικού διαλύματος (mL):</label>
+              <input type="number" id="volumeAcid" value="50" onchange="updateChart()">
+              <label for="pKa" id="pKaLabel">pKa:</label>
+              <input type="number" id="pKa" value="4.76" step="0.1" onchange="updateChart()">
+              <label for="stepSize">Βήμα προσθήκης (mL):</label>
+              <input type="number" id="stepSize" value="1" step="0.1" onchange="updateChart()">
+              <br><br>
+              <button onclick="resetAcidbase()">Επαναφορά</button>
+            </td>
+          </tr>
+          <tr>
+            <!-- Τρίτη σειρά: συγχωνευμένα κελιά που καλύπτουν και τις 2 στήλες -->
+            <td colspan="2">
+              <!-- Περιεχόμενο για συζήτηση στο μέλλον -->
+              <p><em>Εδώ θα τοποθετηθούν πρόσθετα περιεχόμενα που θα συζητηθούν στη συνέχεια.</em></p>
+            </td>
+          </tr>
+        </table>
       </div>
     </div>
   </div>
