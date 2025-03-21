@@ -129,7 +129,7 @@
       sliderPipet.style('left', (pipetX - 50 - 60) + 'px');
       sliderPipet.style('top', (pipetY + 10 + 80) + 'px');
       
-      // Δημιουργία ετικετών για τους sliders, τοποθετώντας τις στο πάνω άκρο κάθε slider
+      // Δημιουργία ετικετών για τους sliders στο πάνω άκρο κάθε slider
       labelInitial = createDiv(int(sliderInitial.value()) + " ml");
       labelInitial.parent("canvas-container");
       labelInitial.class("slider-label");
@@ -140,7 +140,7 @@
       labelPipet.class("slider-label");
       labelPipet.position(pipetX - 50 - 60, pipetY + 10 + 80 - 20);
       
-      // Ενημέρωση των sliders ώστε το άθροισμά τους να παραμένει σταθερό (δηλαδή, το ένα συμπληρώνει το άλλο)
+      // Ενημέρωση των sliders ώστε το άθροισμά τους να παραμένει σταθερό
       sliderInitial.input(function() {
         if (!updateLock) {
           updateLock = true;
@@ -171,26 +171,25 @@
       background(240);
       
       let containerBottom = breakerY + breakerScaledH - 20;
-      let drawnLiquidHeight = min(beakerFill, (int(sliderInitial.value()) + int(sliderPipet.value())));
+      // Το ύψος του υγρού σχεδιάζεται ως το beakerFill (μέχρι το συνολικό target, το άθροισμα των τιμών των sliders)
+      let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
+      let drawnLiquidHeight = min(beakerFill, totalTarget);
       
       let liquidWidth = breakerScaledW * 0.7 - 9;
       let liquidX = (breakerX + (breakerScaledW - liquidWidth) / 2) - 13;
       
-      // Σχεδιάζουμε την κάτω σταθερή έλλειψη (βάση του δοχείου) με χαμηλό z-index
-      push();
-      drawingContext.globalCompositeOperation = "destination-over";
+      // Σχεδιάζουμε πρώτα την κάτω σταθερή έλλειψη (βάση του δοχείου)
       noStroke();
       fill(234, 234, 234);
       ellipseMode(CENTER);
       ellipse(liquidX + liquidWidth / 2, containerBottom, liquidWidth, liquidWidth * 0.3);
-      pop();
       
-      // Σχεδιάζουμε το περιεχόμενο του δοχείου (υγρό)
+      // Σχεδιάζουμε στη συνέχεια το περιεχόμενο (υγρό) του δοχείου πάνω από την έλλειψη
       noStroke();
       fill(234, 234, 234);
       rect(liquidX, containerBottom - drawnLiquidHeight, liquidWidth, drawnLiquidHeight);
       
-      // Σχεδιάζουμε την "επάνω" έλλειψη του υγρού (για ομαλή μετάβαση)
+      // Σχεδιάζουμε την επάνω έλλειψη του υγρού για ομαλή μετάβαση
       stroke(180);
       strokeWeight(1);
       fill(234, 234, 234);
@@ -202,9 +201,6 @@
       image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       
       let targetY = containerBottom - drawnLiquidHeight;
-      
-      // Έλεγχος πλήρωσης: το δοχείο θεωρείται πλήρες όταν beakerFill φτάσει στο συνολικό όριο (δηλαδή, το άθροισμα των τιμών των sliders)
-      let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
       
       if (dropActive) {
         if (!bouncing) {
@@ -246,7 +242,7 @@
       
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
-      // Σχεδίαση ripple effects
+      // Σχεδίαση των ripple effects
       for (let i = rippleEffects.length - 1; i >= 0; i--) {
         let r = rippleEffects[i];
         noFill();
@@ -302,7 +298,6 @@
     }
     
     function startDrop() {
-      // Αν το δοχείο είναι πλήρες, δεν ξεκινάμε το drop
       let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
       if (beakerFill >= totalTarget) return;
       if (!dropActive) {
@@ -323,7 +318,6 @@
     }
     
     function mousePressed() {
-      // Αν το δοχείο είναι πλήρες, το κουμπί δεν αντιδρά
       let totalTarget = int(sliderInitial.value()) + int(sliderPipet.value());
       if (beakerFill >= totalTarget) return;
       if (dist(mouseX, mouseY, buttonCenterX, buttonCenterY) < buttonRadius) {
