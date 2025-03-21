@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση - Εφέ Διπλού Bounce & Ripple</title>
+  <title>Προσομοίωση - Εφέ Bounce & Ripple</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -25,7 +25,6 @@
       border-radius: 3px;
       z-index: 11;
     }
-    /* Η περιοχή ελέγχου για το κουμπί επαναφορά θα παραμείνει εκτός του καμβά */
     #controls {
       margin-top: 20px;
       text-align: center;
@@ -48,7 +47,7 @@
     let bouncing = false;
     let bounceVelocity = 0;
     let gravity = 0.5;
-    let bounceCount = 0; // Μετρητής για τις δύο προσκρούσεις
+    let bounceCount = 0; // Μετρητής αναπήδησης
     
     let scaleFactorImages = 0.5;
     
@@ -65,11 +64,11 @@
     
     let rippleEffects = [];
     
-    // Sliders για το αρχικό περιεχόμενο και την ποσότητα του pipet
+    // Sliders για το αρχικό περιεχόμενο και το pipet
     let sliderInitial, sliderPipet;
     let labelInitial, labelPipet;
     let maxLiquid; // Μέγιστο ύψος υγρού στο δοχείο
-    let updateLock = false; // Για αποφυγή επαναληπτικών ενημερώσεων
+    let updateLock = false;
     
     function preload() {
       pipetteImg = loadImage('pipet3.png');
@@ -106,20 +105,18 @@
       textSize(10);
       textAlign(CENTER, CENTER);
       
-      // Ορίζουμε το μέγιστο ύψος υγρού στο δοχείο
       maxLiquid = breakerScaledH * 0.65;
       
-      // Δημιουργούμε τους δύο επιλογείς (με προεπιλεγμένες τιμές μισό-μισό)
+      // Δημιουργία των sliders (προεπιλεγμένες τιμές: μισό-μισό)
       sliderInitial = createSlider(0, maxLiquid, maxLiquid/2, 1);
       sliderPipet = createSlider(0, maxLiquid, maxLiquid/2, 1);
       
-      // Τοποθετούμε τους sliders μέσα στο container με απόλυτη τοποθέτηση και z-index
+      // Τοποθέτηση των sliders στο container με απόλυτη τοποθέτηση και z-index
       sliderInitial.parent("canvas-container");
       sliderInitial.style('position','absolute');
       sliderInitial.style('z-index','10');
-      // Μεταστροφή για κατακόρυφη εμφάνιση
       sliderInitial.style('transform', 'rotate(-90deg)');
-      // Τοποθετούμε τον slider του δοχείου: δεξιά του ποτηριού και προς τα κάτω
+      // Ο slider του δοχείου τοποθετείται δεξιά του ποτηριού, προς το κάτω μέρος του καμβά
       sliderInitial.style('left', (breakerX + breakerScaledW + 20) + 'px');
       sliderInitial.style('top', (breakerY + breakerScaledH - 40) + 'px');
       
@@ -127,24 +124,22 @@
       sliderPipet.style('position','absolute');
       sliderPipet.style('z-index','10');
       sliderPipet.style('transform', 'rotate(-90deg)');
-      // Τοποθετούμε τον slider του pipet: στα αριστερά του, πάνω στον καμβά
+      // Ο slider του pipet τοποθετείται στα αριστερά του, πάνω στον καμβά
       sliderPipet.style('left', (pipetX - 50) + 'px');
       sliderPipet.style('top', (pipetY + 10) + 'px');
       
-      // Δημιουργούμε τις ετικέτες για τους sliders
+      // Δημιουργία ετικετών για τους sliders
       labelInitial = createDiv(sliderInitial.value() + " ml");
       labelInitial.parent("canvas-container");
       labelInitial.class("slider-label");
-      // Τοποθετούμε την ετικέτα του slider του δοχείου δίπλα στον slider
       labelInitial.position(breakerX + breakerScaledW + 20, breakerY + breakerScaledH - 60);
       
       labelPipet = createDiv(sliderPipet.value() + " ml");
       labelPipet.parent("canvas-container");
       labelPipet.class("slider-label");
-      // Τοποθετούμε την ετικέτα του slider του pipet
       labelPipet.position(pipetX - 80, pipetY + 10);
       
-      // Ενημερώνουμε τους δύο επιλογείς ώστε το άθροισμά τους να παραμένει σταθερό (maxLiquid)
+      // Ενημέρωση των sliders ώστε το άθροισμά τους να παραμένει σταθερό (maxLiquid)
       sliderInitial.input(function() {
         if (!updateLock) {
           updateLock = true;
@@ -168,7 +163,6 @@
         }
       });
       
-      // Ορίζουμε το αρχικό beakerFill σύμφωνα με τον slider του περιεχομένου
       beakerFill = sliderInitial.value();
     }
     
@@ -210,31 +204,30 @@
           if (dropY >= targetY) {
             createRippleEffects(liquidX + liquidWidth / 2, targetY, liquidWidth, liquidWidth * 0.3);
             bouncing = true;
-            bounceVelocity = -3; 
-            bounceCount = 1; // Πρώτη αναπήδηση
+            bounceVelocity = -2; // Πρώτη αναπήδηση με μειωμένο ύψος (μείωση κατά 5 μονάδες)
+            bounceCount = 1;
           }
         } else {
           dropY += bounceVelocity;
           bounceVelocity += gravity;
           if (dropY >= targetY && bounceVelocity > 0) {
             if (bounceCount === 1) {
-              // Δεύτερη σύγκρουση, δημιουργεί νέο ripple
+              // Δεύτερη αναπήδηση
               createRippleEffects(liquidX + liquidWidth / 2, targetY, liquidWidth, liquidWidth * 0.3);
-              bounceVelocity = -2; // Μικρότερη δεύτερη αναπήδηση
+              bounceVelocity = -2; // Δεύτερη αναπήδηση
               bounceCount++;
             } else {
-              // Τέλος της διαδικασίας μετά τη δεύτερη πρόσκρουση
+              // Ολοκλήρωση μετά τη δεύτερη αναπήδηση
               dropActive = false;
               bouncing = false;
               dropY = initialDropY;
-              // Το target fill είναι το άθροισμα των δύο τιμών (περιεχόμενο + pipet)
               let targetFill = sliderInitial.value() + sliderPipet.value();
               if (beakerFill < targetFill) {
                 beakerFill += 3;
                 showBaseEllipse = true;
               }
-              // Μείωση του slider του pipet κατά 3 ml (χωρίς να πάει κάτω από το 0)
-              let newPipet = max(sliderPipet.value() - 3, 0);
+              // Μείωση του slider του pipet κατά 5 ml
+              let newPipet = max(sliderPipet.value() - 5, 0);
               sliderPipet.value(newPipet);
               sliderInitial.value(maxLiquid - newPipet);
               labelPipet.html(newPipet + " ml");
@@ -277,23 +270,11 @@
     
     function drawDrop() {
       let dropX = pipetX + pipetScaledW / 2 - 50;
-      // Όταν η σταγόνα αναπηδά, σχεδιάζουμε ένα μικρότερο σχήμα (μειωμένο κατά 5 μονάδες)
-      if (dropActive && bouncing && bounceCount === 1) {
-        push();
-        translate(dropX, dropY);
-        rotate(PI/2);
-        noStroke();
-        fill(137, 137, 137, 217);
-        // Κανονικό μέγεθος: 10x15, τώρα μειώνουμε κατά 5 (δηλαδή 5x10)
-        ellipse(0, 0, 5, 10);
-        pop();
-      } else {
-        push();
-        fill(137, 137, 137, 217);
-        noStroke();
-        ellipse(dropX, dropY, 10, 15);
-        pop();
-      }
+      push();
+      fill(137, 137, 217, 217);
+      noStroke();
+      ellipse(dropX, dropY, 10, 15);
+      pop();
     }
     
     function createRippleEffects(x, y, maxW, maxH) {
@@ -313,7 +294,6 @@
     }
     
     function startDrop() {
-      // Το target fill είναι το άθροισμα του περιεχομένου και του pipet
       let targetFill = sliderInitial.value() + sliderPipet.value();
       if (beakerFill < targetFill && !dropActive) {
         dropActive = true;
