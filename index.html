@@ -8,26 +8,26 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
-    /* Βασικές ρυθμίσεις: Πλήρες ύψος/πλάτος, padding από κάτω 20px, χωρίς scrollbars */
+    /* Ορίζουμε ολόκληρη σελίδα με padding 20px ώστε να υπάρχει περιθώριο γύρω από το περιεχόμενο */
     html, body {
       margin: 0;
-      padding: 0;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
+      padding: 20px;
+      height: calc(100vh - 40px);
+      width: calc(100vw - 40px);
       box-sizing: border-box;
       background-color: #f9f9f9;
-      padding-bottom: 20px; /* Περιθώριο 20px από το κάτω μέρος */
+      overflow: hidden;
+      font-family: Arial, sans-serif;
     }
     /* Χωρίζουμε το σώμα σε 2 στήλες: αριστερό 60% και δεξί 40% */
     body {
       display: grid;
       grid-template-columns: 60% 40%;
+      gap: 20px;
     }
-    /* Αριστερό Panel - ύψος ως το διαθέσιμο ύψος με το περιθώριο */
+    /* Αριστερό Panel - ύψος ως το διαθέσιμο ύψος της περιοχής (χωρίς τα padding της σελίδας) */
     #left-container {
-      height: calc(100vh - 20px);
+      height: 100%;
       padding: 20px;
       gap: 20px;
       display: grid;
@@ -35,13 +35,14 @@
       grid-template-rows: 65% 35%;
       overflow: hidden;
     }
-    /* Διάγραμμα Chart.js */
+    /* Διάγραμμα Chart.js: προστίθεται margin-bottom για να μην φτάνει στο κάτω άκρο */
     #diagram-container {
       border: 1px solid #ccc;
       background-color: #fff;
       padding: 10px;
       height: 100%;
       box-sizing: border-box;
+      margin-bottom: 20px;
     }
     /* Κάτω περιοχή αριστερού panel (μηνύματα και κουμπιά) */
     #bottom-container {
@@ -75,9 +76,9 @@
     #buttons-container button:hover {
       background-color: #45a049;
     }
-    /* Δεξί Panel - ύψος ως το διαθέσιμο ύψος, με padding-right 20px για το δεξιό περιθώριο */
+    /* Δεξί Panel: προστίθεται padding-right 20px ώστε να υπάρχει περιθώριο από τα δεξιά */
     #right-container {
-      height: calc(100vh - 20px);
+      height: 100%;
       padding: 20px;
       padding-right: 20px;
       overflow: hidden;
@@ -98,6 +99,10 @@
       height: 100%;
       width: 100%;
       overflow: hidden;
+    }
+    /* Προσθέτουμε margin-bottom 20px και στα δύο containers που φιλοξενούν καμβάδες */
+    #diagram-container, #glass-canvas-container {
+      margin-bottom: 20px;
     }
     /* Στήλη για τους επιλογείς AcidBase */
     #acidbase-params {
