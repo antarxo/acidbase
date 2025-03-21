@@ -3,95 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Δύο Δεξιά Συρτάρια με p5.js</title>
+  <title>Δύο Συρτάρια με p5.js</title>
   <!-- Φόρτωση της βιβλιοθήκης p5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
     body {
       margin: 0;
-      overflow: hidden;
       font-family: Arial, sans-serif;
+      overflow-x: hidden;
     }
     /* Στυλ για τα συρτάρια */
     .drawer {
       width: 250px;
-      height: 100vh;
       position: fixed;
-      top: 0;
-      right: -250px; /* Αρχικά εκτός οθόνης */
+      right: -250px; /* Αρχική θέση εκτός οθόνης */
       background-color: #444;
       color: #fff;
       padding: 20px;
       box-sizing: border-box;
       transition: right 0.3s ease-in-out;
-      z-index: 10;
+      border: 1px solid #222;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+      overflow-y: auto;
     }
-    /* Όταν το συρτάρι είναι ενεργό, τοποθετείται στην οθόνη */
+    /* Όταν το συρτάρι είναι ενεργό */
     .drawer.active {
       right: 0;
     }
     /* Στυλ για τα κουμπιά εναλλαγής */
     .toggleBtn {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      right: 260px;
       background-color: #007bff;
       color: #fff;
       border: none;
-      padding: 10px 15px;
+      padding: 8px 12px;
       cursor: pointer;
-      z-index: 20;
       border-radius: 5px;
       font-size: 14px;
-    }
-    .toggleBtn2 {
-      position: fixed;
-      top: 60px;
-      right: 20px;
-      background-color: #28a745;
-      color: #fff;
-      border: none;
-      padding: 10px 15px;
-      cursor: pointer;
       z-index: 20;
-      border-radius: 5px;
-      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <script>
     let drawer1, drawer2;
-    let toggleBtn, toggleBtn2;
-    
+    let toggleBtn1, toggleBtn2;
+
     function setup() {
-      // Δημιουργία canvas (μπορείς να το χρησιμοποιήσεις για animation ή background)
+      // Δημιουργία canvas για φόντο ή animation (προαιρετικό)
       createCanvas(windowWidth, windowHeight);
-      background(220);
-      
-      // Δημιουργία του πρώτου συρταριού με p5.js createDiv
-      drawer1 = createDiv('<h2>Drawer 1</h2><p>Περιεχόμενο του πρώτου συρταριού.</p>');
+      background(240);
+
+      // Δημιουργία του πρώτου συρταριού: απόσταση 50px από την κορυφή, ύψος 300px
+      drawer1 = createDiv('<h3>Συρτάρι 1</h3><p>Περιεχόμενο συρταριού 1.</p>');
       drawer1.addClass('drawer');
-      // Αρχική τοποθέτηση: offscreen στη δεξιά πλευρά
-      drawer1.position(windowWidth - 250, 0);
-      
-      // Δημιουργία του δεύτερου συρταριού
-      drawer2 = createDiv('<h2>Drawer 2</h2><p>Περιεχόμενο του δεύτερου συρταριού.</p>');
+      drawer1.style('top', '50px');
+      drawer1.style('height', '300px');
+      // Αρχική τοποθέτηση: εκτός οθόνης
+      drawer1.position(windowWidth - 250, 50);
+
+      // Δημιουργία του δεύτερου συρταριού: απόσταση κάτω από το πρώτο (π.χ. 400px από την κορυφή), ύψος 300px
+      drawer2 = createDiv('<h3>Συρτάρι 2</h3><p>Περιεχόμενο συρταριού 2.</p>');
       drawer2.addClass('drawer');
-      // Μετατοπίστε το δεύτερο συρτάρι για να μην επικαλύπτεται το πρώτο, π.χ. πιο κάτω
-      drawer2.style('top', '150px');
-      drawer2.position(windowWidth - 250, 0);
-      
-      // Δημιουργία των κουμπιών εναλλαγής με p5.js createButton
-      toggleBtn = createButton('Toggle Drawer 1');
-      toggleBtn.addClass('toggleBtn');
-      toggleBtn.mousePressed(toggleDrawer1);
-      
-      toggleBtn2 = createButton('Toggle Drawer 2');
-      toggleBtn2.addClass('toggleBtn2');
+      drawer2.style('top', '400px');
+      drawer2.style('height', '300px');
+      drawer2.position(windowWidth - 250, 400);
+
+      // Δημιουργία κουμπιών εναλλαγής για κάθε συρτάρι
+      toggleBtn1 = createButton('Toggle Συρτάρι 1');
+      toggleBtn1.addClass('toggleBtn');
+      toggleBtn1.position(windowWidth - 350, 60); // τοποθέτηση δίπλα στο πρώτο συρτάρι
+      toggleBtn1.mousePressed(toggleDrawer1);
+
+      toggleBtn2 = createButton('Toggle Συρτάρι 2');
+      toggleBtn2.addClass('toggleBtn');
+      toggleBtn2.position(windowWidth - 350, 410); // τοποθέτηση δίπλα στο δεύτερο συρτάρι
       toggleBtn2.mousePressed(toggleDrawer2);
     }
-    
+
     // Συνάρτηση εναλλαγής για το πρώτο συρτάρι
     function toggleDrawer1() {
       if (drawer1.elt.classList.contains('active')) {
@@ -100,7 +90,7 @@
         drawer1.addClass('active');
       }
     }
-    
+
     // Συνάρτηση εναλλαγής για το δεύτερο συρτάρι
     function toggleDrawer2() {
       if (drawer2.elt.classList.contains('active')) {
@@ -109,17 +99,25 @@
         drawer2.addClass('active');
       }
     }
-    
-    // Ενημέρωση του canvas σε περίπτωση αλλαγής μεγέθους παραθύρου
+
+    // Ενημέρωση της τοποθέτησης σε περίπτωση αλλαγής μεγέθους παραθύρου
     function windowResized() {
       resizeCanvas(windowWidth, windowHeight);
-      // Επανατοποθέτηση των drawer στην νέα θέση (εκτός οθόνης)
+      // Αναπροσαρμογή των drawer
       if (!drawer1.elt.classList.contains('active')) {
-        drawer1.position(windowWidth - 250, 0);
+        drawer1.position(windowWidth - 250, 50);
+      } else {
+        // Εάν είναι ενεργό, τοποθετούμε το drawer με right:0
+        drawer1.position(windowWidth - 250, 50);
       }
       if (!drawer2.elt.classList.contains('active')) {
-        drawer2.position(windowWidth - 250, 0);
+        drawer2.position(windowWidth - 250, 400);
+      } else {
+        drawer2.position(windowWidth - 250, 400);
       }
+      // Ενημέρωση θέσεων των κουμπιών
+      toggleBtn1.position(windowWidth - 350, 60);
+      toggleBtn2.position(windowWidth - 350, 410);
     }
   </script>
 </body>
