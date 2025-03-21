@@ -13,6 +13,7 @@
       height: 100vh;
       margin: 0;
       background-color: #f0f0f0;
+      position: relative;
     }
     canvas {
       display: block;
@@ -52,6 +53,11 @@
     
     let rippleEffects = [];
     
+    // Sliders για το αρχικό περιεχόμενο και την ποσότητα του pipet
+    let sliderInitial, sliderPipet;
+    let maxLiquid; // Μέγιστο ύψος υγρού στο δοχείο
+    let updateLock = false; // Για αποφυγή επαναληπτικών ενημερώσεων
+    
     function preload() {
       pipetteImg = loadImage('pipet3.png');
       breakerImg = loadImage('breaker3.png');
@@ -65,7 +71,8 @@
       
       let canvasWidth = max(pipetScaledW, breakerScaledW);
       let canvasHeight = pipetScaledH + breakerScaledH;
-      createCanvas(canvasWidth, canvasHeight).parent("canvas-container");
+      let cnv = createCanvas(canvasWidth, canvasHeight);
+      cnv.parent("canvas-container");
       
       pipetX = canvasWidth - pipetScaledW;
       pipetY = 0;
@@ -85,14 +92,54 @@
       textFont('Arial');
       textSize(10);
       textAlign(CENTER, CENTER);
+      
+      // Ορίζουμε το μέγιστο ύψος υγρού στο δοχείο
+      maxLiquid = breakerScaledH * 0.65;
+      
+      // Δημιουργούμε τους δύο επιλογείς έτσι ώστε το άθροισμά τους να ισούται με maxLiquid
+      // (προεπιλεγμένες τιμές: μισό-μισό)
+      sliderInitial = createSlider(0, maxLiquid, maxLiquid/2, 1);
+      sliderPipet = createSlider(0, maxLiquid, maxLiquid/2, 1);
+      
+      // Τοποθετούμε τον επιλογέα για το αρχικό περιεχόμενο δίπλα στο ποτήρι (δεξιά)
+      sliderInitial.position(breakerX + breakerScaledW + 20, breakerY + breakerScaledH/2 - 10);
+      sliderInitial.id("slider-initial");
+      
+      // Ο επιλογέας για την ποσότητα του pipet τοποθετείται στα αριστερά του pipet
+      sliderPipet.position(pipetX - sliderPipet.width - 20, pipetY + pipetScaledH/2 - 10);
+      sliderPipet.id("slider-pipet");
+      
+      // Ενημερώνουμε τους δύο επιλογείς ώστε το άθροισμά τους να παραμένει σταθερό (maxLiquid)
+      sliderInitial.input(function() {
+        if (!updateLock) {
+          updateLock = true;
+          let initialVal = sliderInitial.value();
+          sliderPipet.value(maxLiquid - initialVal);
+          // Επίσης ενημερώνουμε το αρχικό beakerFill
+          beakerFill = initialVal;
+          updateLock = false;
+        }
+      });
+      
+      sliderPipet.input(function() {
+        if (!updateLock) {
+          updateLock = true;
+          let pipetVal = sliderPipet.value();
+          sliderInitial.value(maxLiquid - pipetVal);
+          updateLock = false;
+        }
+      });
+      
+      // Ορίζουμε το αρχικό beakerFill σύμφωνα με τον επιλογέα για το αρχικό περιεχόμενο
+      beakerFill = sliderInitial.value();
     }
     
     function draw() {
       background(240);
       
       let containerBottom = breakerY + breakerScaledH - 20;
-      let maxLiquidHeight = breakerScaledH * 0.65;
-      let drawnLiquidHeight = min(beakerFill, maxLiquidHeight);
+      // Χρησιμοποιούμε το maxLiquid ως το μέγιστο ύψος του υγρού που θα σχεδιαστεί
+      let drawnLiquidHeight = min(beakerFill, maxLiquid);
       
       let liquidWidth = breakerScaledW * 0.7 - 9;
       let liquidX = (breakerX + (breakerScaledW - liquidWidth) / 2) - 13;
@@ -143,7 +190,9 @@
               dropActive = false;
               bouncing = false;
               dropY = initialDropY;
-              if (beakerFill < maxLiquidHeight) {
+              // Το target fill είναι το άθροισμα των δύο τιμών (αρχικό περιεχόμενο + ποσότητα του pipet)
+              let targetFill = sliderInitial.value() + sliderPipet.value();
+              if (beakerFill < targetFill) {
                 beakerFill += 3;
                 showBaseEllipse = true;
               }
@@ -184,11 +233,23 @@
     }
     
     function drawDrop() {
-      push();
-      fill(137, 137, 137, 217);
-      noStroke();
-      ellipse(pipetX + pipetScaledW / 2 - 50, dropY, 10, 15);
-      pop();
+      let dropX = pipetX + pipetScaledW / 2 - 50;
+      // Σχεδιάζουμε τη σταγόνα με τροποποιημένο σχήμα όταν αναπηδά (μόνο στην πρώτη αναπήδηση)
+      if (dropActive && bouncing && bounceCount === 1) {
+        push();
+        translate(dropX, dropY);
+        rotate(PI/2);
+        noStroke();
+        fill(137, 137, 137, 217);
+        ellipse(0, 0, 7, 10); // Μικρότερες διαστάσεις μετά την περιστροφή
+        pop();
+      } else {
+        push();
+        fill(137, 137, 137, 217);
+        noStroke();
+        ellipse(dropX, dropY, 10, 15);
+        pop();
+      }
     }
     
     function createRippleEffects(x, y, maxW, maxH) {
@@ -208,8 +269,9 @@
     }
     
     function startDrop() {
-      let maxLiquidHeight = breakerScaledH * 0.65;
-      if (beakerFill < maxLiquidHeight && !dropActive) {
+      // Το target fill είναι το άθροισμα του αρχικού περιεχομένου και της ποσότητας του pipet
+      let targetFill = sliderInitial.value() + sliderPipet.value();
+      if (beakerFill < targetFill && !dropActive) {
         dropActive = true;
         bouncing = false;
         bounceVelocity = 0;
@@ -217,7 +279,7 @@
     }
     
     function resetFill() {
-      beakerFill = 0;
+      beakerFill = sliderInitial.value();
       dropY = initialDropY;
       dropActive = false;
       bouncing = false;
