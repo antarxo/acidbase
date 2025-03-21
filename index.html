@@ -67,8 +67,11 @@
     // Sliders για το περιεχόμενο του δοχείου και το pipet
     let sliderInitial, sliderPipet;
     let labelInitial, labelPipet;
-    let maxLiquid; // Μέγιστο ύψος υγρού στο δοχείο
+    let maxLiquid; // Μέγιστο ύψος υγρού στο δοχείο (σε ml)
     let updateLock = false;
+    
+    // Ορίζουμε τη max τιμή στο δοχείο ως 140 ml
+    maxLiquid = 140;
     
     function preload() {
       pipetteImg = loadImage('pipet3.png');
@@ -105,18 +108,16 @@
       textSize(10);
       textAlign(CENTER, CENTER);
       
-      maxLiquid = breakerScaledH * 0.65;
-      
-      // Δημιουργία των sliders (προεπιλεγμένες τιμές: μισό-μισό)
-      sliderInitial = createSlider(0, maxLiquid, maxLiquid/2, 1);
-      sliderPipet = createSlider(0, maxLiquid, maxLiquid/2, 1);
+      // Αρχικές τιμές: 70,70 (δηλαδή maxLiquid/2)
+      sliderInitial = createSlider(0, maxLiquid, 70, 1);
+      sliderPipet = createSlider(0, maxLiquid, 70, 1);
       
       // Τοποθέτηση του slider του δοχείου (sliderInitial)
       sliderInitial.parent("canvas-container");
       sliderInitial.style('position','absolute');
       sliderInitial.style('z-index','10');
       sliderInitial.style('transform', 'rotate(-90deg)');
-      // Μετακινείται 80 px αριστερότερα και 80 px προς τα πάνω
+      // Μετακίνηση: 80 px αριστερότερα και 80 px προς τα πάνω
       sliderInitial.style('left', (breakerX + breakerScaledW + 20 - 80) + 'px');
       sliderInitial.style('top', (breakerY + breakerScaledH - 40 - 80) + 'px');
       
@@ -125,32 +126,30 @@
       sliderPipet.style('position','absolute');
       sliderPipet.style('z-index','10');
       sliderPipet.style('transform', 'rotate(-90deg)');
-      // Μετακινείται 60 px αριστερότερα και 80 px προς τα Κάτω
+      // Μετακίνηση: 60 px αριστερότερα και 80 px προς τα Κάτω
       sliderPipet.style('left', (pipetX - 50 - 60) + 'px');
       sliderPipet.style('top', (pipetY + 10 + 80) + 'px');
       
-      // Δημιουργία ετικετών για τους sliders και τοποθέτηση στο πάνω άκρο κάθε slider
-      labelInitial = createDiv(sliderInitial.value() + " ml");
+      // Δημιουργία ετικετών για τους sliders, τοποθετώντας τις στο πάνω άκρο κάθε slider
+      labelInitial = createDiv(int(sliderInitial.value()) + " ml");
       labelInitial.parent("canvas-container");
       labelInitial.class("slider-label");
-      // Τοποθέτηση της ετικέτας του δοχείου στο πάνω άκρο του sliderInitial
       labelInitial.position(breakerX + breakerScaledW + 20 - 80, breakerY + breakerScaledH - 40 - 80 - 20);
       
-      labelPipet = createDiv(sliderPipet.value() + " ml");
+      labelPipet = createDiv(int(sliderPipet.value()) + " ml");
       labelPipet.parent("canvas-container");
       labelPipet.class("slider-label");
-      // Τοποθέτηση της ετικέτας του pipet στο πάνω άκρο του sliderPipet
       labelPipet.position(pipetX - 50 - 60, pipetY + 10 + 80 - 20);
       
       // Ενημέρωση των sliders ώστε το άθροισμά τους να παραμένει σταθερό (maxLiquid)
       sliderInitial.input(function() {
         if (!updateLock) {
           updateLock = true;
-          let initialVal = sliderInitial.value();
+          let initialVal = int(sliderInitial.value());
           sliderPipet.value(maxLiquid - initialVal);
           beakerFill = initialVal;
           labelInitial.html(initialVal + " ml");
-          labelPipet.html(sliderPipet.value() + " ml");
+          labelPipet.html(int(sliderPipet.value()) + " ml");
           updateLock = false;
         }
       });
@@ -158,15 +157,15 @@
       sliderPipet.input(function() {
         if (!updateLock) {
           updateLock = true;
-          let pipetVal = sliderPipet.value();
+          let pipetVal = int(sliderPipet.value());
           sliderInitial.value(maxLiquid - pipetVal);
           labelPipet.html(pipetVal + " ml");
-          labelInitial.html(sliderInitial.value() + " ml");
+          labelInitial.html(int(sliderInitial.value()) + " ml");
           updateLock = false;
         }
       });
       
-      beakerFill = sliderInitial.value();
+      beakerFill = int(sliderInitial.value());
     }
     
     function draw() {
@@ -201,6 +200,10 @@
       
       let targetY = containerBottom - drawnLiquidHeight;
       
+      // Αν το δοχείο έχει συμπληρωθεί πλήρως (140 ml), απενεργοποιούμε το "Πάτα!" (δείχνουμε το κουμπί σε γκρι)
+      let totalRemaining = int(sliderInitial.value()) + int(sliderPipet.value());
+      let full = (totalRemaining === maxLiquid);
+      
       if (dropActive) {
         if (!bouncing) {
           dropY += dropSpeed;
@@ -224,17 +227,16 @@
               dropActive = false;
               bouncing = false;
               dropY = initialDropY;
-              let targetFill = sliderInitial.value() + sliderPipet.value();
-              if (beakerFill < targetFill) {
+              if (beakerFill < targetY) {
                 beakerFill += 3;
                 showBaseEllipse = true;
               }
               // Μείωση του slider του pipet κατά 5 ml
-              let newPipet = max(sliderPipet.value() - 5, 0);
+              let newPipet = max(int(sliderPipet.value()) - 5, 0);
               sliderPipet.value(newPipet);
               sliderInitial.value(maxLiquid - newPipet);
               labelPipet.html(newPipet + " ml");
-              labelInitial.html((maxLiquid - newPipet) + " ml");
+              labelInitial.html(int(sliderInitial.value()) + " ml");
             }
           }
         }
@@ -243,6 +245,7 @@
       
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
       
+      // Σχεδίαση ripple effects
       for (let i = rippleEffects.length - 1; i >= 0; i--) {
         let r = rippleEffects[i];
         noFill();
@@ -257,13 +260,18 @@
         }
       }
       
+      // Σχεδίαση του "Πάτα!" κουμπιού: αν το δοχείο είναι πλήρες, εμφανίζεται σε γκρι
       push();
       drawingContext.shadowOffsetX = 0;
       drawingContext.shadowOffsetY = 0;
       drawingContext.shadowBlur = 8;
       drawingContext.shadowColor = "rgba(0, 0, 0, 0.5)";
       noStroke();
-      fill(255, 0, 0);
+      if (full) {
+        fill(150);
+      } else {
+        fill(255, 0, 0);
+      }
       ellipse(buttonCenterX, buttonCenterY, buttonRadius * 2, buttonRadius * 2);
       drawingContext.shadowBlur = 0;
       fill(255);
@@ -297,7 +305,9 @@
     }
     
     function startDrop() {
-      let targetFill = sliderInitial.value() + sliderPipet.value();
+      // Αν το δοχείο είναι πλήρες, δεν ξεκινάμε drop
+      if (int(sliderInitial.value()) + int(sliderPipet.value()) === maxLiquid) return;
+      let targetFill = int(sliderInitial.value()) + int(sliderPipet.value());
       if (beakerFill < targetFill && !dropActive) {
         dropActive = true;
         bouncing = false;
@@ -306,7 +316,7 @@
     }
     
     function resetFill() {
-      beakerFill = sliderInitial.value();
+      beakerFill = int(sliderInitial.value());
       dropY = initialDropY;
       dropActive = false;
       bouncing = false;
@@ -317,6 +327,8 @@
     }
     
     function mousePressed() {
+      // Αν το δοχείο είναι πλήρες, δεν ανταποκρινόμαστε στο "Πάτα!"
+      if (int(sliderInitial.value()) + int(sliderPipet.value()) === maxLiquid) return;
       if (dist(mouseX, mouseY, buttonCenterX, buttonCenterY) < buttonRadius) {
         startDrop();
       }
