@@ -2,47 +2,55 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Mockup Layout - 4 Χώροι</title>
+  <title>Mockup Layout - 4 Χώροι (Με Κατώ 75%/25%)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
-    /* Ορίζουμε μια grid διάταξη για την οθόνη */
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 480px;
-      grid-template-rows: 60% 40%;
-      grid-template-areas:
-        "diagram instructions"
-        "messages buttons";
-      gap: 10px;
       font-family: Arial, sans-serif;
       box-sizing: border-box;
     }
-    /* Αριστερός πάνω χώρος: Διάγραμμα */
+    /* Άνω ενότητα: Διάγραμμα και Οδηγίες */
+    #top-container {
+      display: grid;
+      grid-template-columns: 1fr 480px;
+      grid-template-rows: 1fr;
+      gap: 10px;
+      height: calc(100vh - 40px); /* Αφαιρούμε το ύψος της κάτω ενότητας */
+    }
+    /* Αριστερός πάνω: Διάγραμμα */
     #diagram-container {
-      grid-area: diagram;
       background-color: #fff;
     }
-    /* Δεξιός πάνω χώρος: Οδηγίες (glass & επιλογές) */
+    /* Δεξιός πάνω: Οδηγίες (Glass & επιλογές) */
     #instructions-container {
-      grid-area: instructions;
       background-color: #eef;
       padding: 10px;
       position: relative;
     }
-    /* Κάτω αριστερά: Μηνύματα/Οδηγίες */
+    /* Κάτω ενότητα: Μηνύματα (αριστερός) και Επιπλέον Κουμπιά (δεξιός) */
+    #bottom-container {
+      display: flex;
+      height: 40px;
+      gap: 10px;
+    }
+    /* Μηνύματα: 75% του πλάτους */
     #messages-container {
-      grid-area: messages;
+      flex: 0 0 75%;
       background-color: #e0e0e0;
       padding: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
     }
-    /* Κάτω δεξιά: Επιπλέον κουμπιά */
+    /* Επιπλέον Κουμπιά: 25% του πλάτους */
     #buttons-container {
-      grid-area: buttons;
+      flex: 0 0 25%;
       background-color: #ddd;
       padding: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
     }
     canvas {
       display: block;
@@ -50,17 +58,23 @@
   </style>
 </head>
 <body>
-  <!-- Αριστερός πάνω: Διάγραμμα -->
-  <div id="diagram-container"></div>
-  <!-- Δεξιός πάνω: Οδηγίες/επιλογές με το ενσωματωμένο κουμπί "Πάτα!" -->
-  <div id="instructions-container"></div>
-  <!-- Κάτω αριστερά: Μηνύματα/Οδηγίες -->
-  <div id="messages-container"></div>
-  <!-- Κάτω δεξιά: Επιπλέον κουμπιά (χωρίς το "Πάτα!") -->
-  <div id="buttons-container"></div>
+  <!-- Άνω Ενότητα -->
+  <div id="top-container">
+    <!-- Αριστερός πάνω: Διάγραμμα -->
+    <div id="diagram-container"></div>
+    <!-- Δεξιός πάνω: Οδηγίες/Επιλογές με το ενσωματωμένο κουμπί "Πάτα!" -->
+    <div id="instructions-container"></div>
+  </div>
+  <!-- Κάτω Ενότητα -->
+  <div id="bottom-container">
+    <!-- Κάτω αριστερά: Μηνύματα/Οδηγίες -->
+    <div id="messages-container"></div>
+    <!-- Κάτω δεξιά: Επιπλέον Κουμπιά -->
+    <div id="buttons-container"></div>
+  </div>
 
   <script>
-    // Καμβάς για το διάγραμμα (αριστερός πάνω χώρος)
+    // Καμβάς για το διάγραμμα (Αριστερός πάνω χώρος)
     let diagramSketch = function(p) {
       p.setup = function() {
         let container = document.getElementById("diagram-container");
@@ -79,7 +93,7 @@
     }
     new p5(diagramSketch);
 
-    // Καμβάς για τις οδηγίες/επιλογές (δεξιός πάνω χώρος)
+    // Καμβάς για τις οδηγίες/επιλογές (Δεξιός πάνω χώρος)
     let instructionsSketch = function(p) {
       p.setup = function() {
         let container = document.getElementById("instructions-container");
@@ -106,7 +120,7 @@
     }
     new p5(instructionsSketch);
 
-    // Καμβάς για τα μηνύματα/οδηγίες (κάτω αριστερά)
+    // Καμβάς για τα μηνύματα (Κάτω αριστερά)
     let messagesSketch = function(p) {
       p.setup = function() {
         let container = document.getElementById("messages-container");
@@ -125,7 +139,7 @@
     }
     new p5(messagesSketch);
 
-    // Καμβάς για τα επιπλέον κουμπιά (κάτω δεξιά)
+    // Καμβάς για τα επιπλέον κουμπιά (Κάτω δεξιά)
     let buttonsSketch = function(p) {
       p.setup = function() {
         let container = document.getElementById("buttons-container");
