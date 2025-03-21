@@ -110,12 +110,18 @@
     #diagram-container, #glass-canvas-container {
       margin-bottom: 20px;
     }
+    /* Σημαντική ρύθμιση για το container του p5.js ώστε να έχει εμφανές ύψος */
+    #glass-canvas-container {
+      display: block;
+      width: 100%;
+      height: 300px; /* Σταθερό ύψος για το γραφικό */
+      background: #fff;
+    }
   </style>
   <script>
     // Ορισμός της συνάρτησης updateLabel ώστε να μην προκαλείται σφάλμα
     function updateLabel() {
-      // Εδώ μπορείτε να βάλετε κώδικα για να ενημερώνετε ετικέτες, αν απαιτείται.
-      // Για τώρα, αφήνουμε την συνάρτηση κενή.
+      // Μπορείτε να ενημερώσετε ετικέτες εδώ, αν χρειαστεί.
     }
   </script>
 </head>
@@ -147,9 +153,10 @@
     <div id="acidbase-params">
       <table>
         <tr>
-          <!-- Πρώτη στήλη συγχωνευμένη σε 2 σειρές: το p5.js canvas με pipet & beaker -->
+          <!-- Πρώτη στήλη συγχωνευμένη σε 2 σειρές: εδώ τοποθετείται το p5.js canvas (pipet & beaker) -->
           <td rowspan="2" style="vertical-align: top;">
-            <div id="glass-canvas-container" style="width:100%; height:300px; background:#fff;"></div>
+            <!-- p5.js container -->
+            <div id="glass-canvas-container"></div>
           </td>
           <!-- Δεύτερη στήλη, πρώτη σειρά: ρυθμίσεις 1 -->
           <td>
@@ -363,8 +370,9 @@
     }
     
     function setup() {
-      // Προσαρμογή του p5.js καμβά στο container του πίνακα (στο κελί που περιέχει το γραφικό)
+      // Ελέγχουμε τις διαστάσεις του container του p5.js
       let container = document.getElementById("glass-canvas-container");
+      console.log("glass-canvas-container dimensions:", container.offsetWidth, container.offsetHeight);
       let canvasWidth = container.offsetWidth;
       let canvasHeight = container.offsetHeight;
       let cnv = createCanvas(canvasWidth, canvasHeight);
@@ -375,7 +383,7 @@
       breakerScaledW = breakerImg.width * scaleFactorImages;
       breakerScaledH = breakerImg.height * scaleFactorImages;
       
-      // Τοποθέτηση στοιχείων βάσει του μεγέθους του καμβά
+      // Τοποθετούμε τα στοιχεία σύμφωνα με τις διαστάσεις του καμβά
       pipetX = canvasWidth - pipetScaledW;
       pipetY = 0;
       breakerX = canvasWidth - breakerScaledW;
