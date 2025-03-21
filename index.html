@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
-    /* Βασικές ρυθμίσεις: Πλήρες ύψος/πλάτος και περιθώριο 20px από κάτω, χωρίς scrollbars */
+    /* Βασικές ρυθμίσεις: Πλήρες ύψος/πλάτος, padding από κάτω 20px, χωρίς scrollbars */
     html, body {
       margin: 0;
       padding: 0;
@@ -25,13 +25,13 @@
       display: grid;
       grid-template-columns: 60% 40%;
     }
-    /* Αριστερό Panel - ύψος ορισμένο ως το διαθέσιμο ύψος με το περιθώριο */
+    /* Αριστερό Panel - ύψος ως το διαθέσιμο ύψος με το περιθώριο */
     #left-container {
       height: calc(100vh - 20px);
       padding: 20px;
       gap: 20px;
       display: grid;
-      /* Αναλογία 65% για το διάγραμμα και 35% για το κάτω μέρος ώστε να εμφανίζονται οι οδηγίες και τα κουμπιά */
+      /* Αναλογία 65% για το διάγραμμα και 35% για το κάτω μέρος */
       grid-template-rows: 65% 35%;
       overflow: hidden;
     }
@@ -75,15 +75,16 @@
     #buttons-container button:hover {
       background-color: #45a049;
     }
-    /* Δεξί Panel - ύψος ορισμένο ως το διαθέσιμο ύψος */
+    /* Δεξί Panel - ύψος ως το διαθέσιμο ύψος, με padding-right 20px για το δεξιό περιθώριο */
     #right-container {
       height: calc(100vh - 20px);
       padding: 20px;
+      padding-right: 20px;
       overflow: hidden;
       border-left: 1px solid #ccc;
       background-color: #fff;
     }
-    /* Instructions container με 2 στήλες */
+    /* Container οδηγιών με 2 στήλες */
     #instructions-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -106,9 +107,11 @@
       box-sizing: border-box;
       overflow: auto;
     }
+    /* Όλες οι ετικέτες στο δεξί πάνελ να έχουν μέγεθος 13px */
     #acidbase-params label {
       display: block;
       margin-top: 10px;
+      font-size: 13px;
     }
     #acidbase-params input,
     #acidbase-params select {
@@ -116,8 +119,9 @@
       padding: 5px;
       margin-top: 5px;
       box-sizing: border-box;
+      font-size: 13px;
     }
-    /* Μέγεθος γραμματοσειράς για τις ετικέτες του p5.js */
+    /* Ετικέτες του p5.js */
     .slider-label {
       font-size: 13px;
     }
