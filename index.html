@@ -96,17 +96,20 @@
       // Ορίζουμε το μέγιστο ύψος υγρού στο δοχείο
       maxLiquid = breakerScaledH * 0.65;
       
-      // Δημιουργούμε τους δύο επιλογείς έτσι ώστε το άθροισμά τους να ισούται με maxLiquid
-      // (προεπιλεγμένες τιμές: μισό-μισό)
+      // Δημιουργούμε τους δύο επιλογείς (με προεπιλεγμένες τιμές μισό-μισό)
       sliderInitial = createSlider(0, maxLiquid, maxLiquid/2, 1);
       sliderPipet = createSlider(0, maxLiquid, maxLiquid/2, 1);
       
-      // Τοποθετούμε τον επιλογέα για το αρχικό περιεχόμενο δίπλα στο ποτήρι (δεξιά)
-      sliderInitial.position(breakerX + breakerScaledW + 20, breakerY + breakerScaledH/2 - 10);
+      // Τοποθετούμε τον επιλογέα για το περιεχόμενο του δοχείου:
+      // Δεξιά του ποτηριού και προς το κάτω μέρος του καμβά σχεδίασης.
+      sliderInitial.position(breakerX + breakerScaledW + 20, breakerY + breakerScaledH - 40);
+      sliderInitial.style('transform', 'rotate(-90deg)');
       sliderInitial.id("slider-initial");
       
-      // Ο επιλογέας για την ποσότητα του pipet τοποθετείται στα αριστερά του pipet
-      sliderPipet.position(pipetX - sliderPipet.width - 20, pipetY + pipetScaledH/2 - 10);
+      // Τοποθετούμε τον επιλογέα για το pipet:
+      // Στα αριστερά του pipet, πάνω στον καμβά σχεδίασης.
+      sliderPipet.position(pipetX - 50, pipetY + 10);
+      sliderPipet.style('transform', 'rotate(-90deg)');
       sliderPipet.id("slider-pipet");
       
       // Ενημερώνουμε τους δύο επιλογείς ώστε το άθροισμά τους να παραμένει σταθερό (maxLiquid)
@@ -130,7 +133,7 @@
         }
       });
       
-      // Ορίζουμε το αρχικό beakerFill σύμφωνα με τον επιλογέα για το αρχικό περιεχόμενο
+      // Ορίζουμε το αρχικό beakerFill σύμφωνα με τον επιλογέα για το περιεχόμενο
       beakerFill = sliderInitial.value();
     }
     
