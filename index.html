@@ -9,14 +9,14 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
       overflow-x: hidden;
+      font-family: Arial, sans-serif;
     }
     /* Στυλ για τα συρτάρια */
     .drawer {
       width: 250px;
       position: fixed;
-      right: -250px; /* Αρχική θέση εκτός οθόνης */
+      right: -250px; /* Αρχικά κρυφό, έξω από την οθόνη */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -24,16 +24,14 @@
       transition: right 0.3s ease-in-out;
       border: 1px solid #222;
       box-shadow: -2px 0 5px rgba(0,0,0,0.5);
-      overflow-y: auto;
     }
-    /* Όταν το συρτάρι είναι ενεργό */
+    /* Όταν το συρτάρι έχει ενεργοποιηθεί */
     .drawer.active {
       right: 0;
     }
     /* Στυλ για τα κουμπιά εναλλαγής */
     .toggleBtn {
       position: fixed;
-      right: 260px;
       background-color: #007bff;
       color: #fff;
       border: none;
@@ -55,69 +53,57 @@
       createCanvas(windowWidth, windowHeight);
       background(240);
 
-      // Δημιουργία του πρώτου συρταριού: απόσταση 50px από την κορυφή, ύψος 300px
+      // Δημιουργία του πρώτου συρταριού: 50px από την κορυφή, ύψος 300px
       drawer1 = createDiv('<h3>Συρτάρι 1</h3><p>Περιεχόμενο συρταριού 1.</p>');
       drawer1.addClass('drawer');
+      // Ορίζουμε την τοποθέτηση μέσω CSS (top, height και αρχικό right)
       drawer1.style('top', '50px');
       drawer1.style('height', '300px');
-      // Αρχική τοποθέτηση: εκτός οθόνης
-      drawer1.position(windowWidth - 250, 50);
+      drawer1.style('right', '-250px');
 
-      // Δημιουργία του δεύτερου συρταριού: απόσταση κάτω από το πρώτο (π.χ. 400px από την κορυφή), ύψος 300px
+      // Δημιουργία του δεύτερου συρταριού: 400px από την κορυφή, ύψος 300px
       drawer2 = createDiv('<h3>Συρτάρι 2</h3><p>Περιεχόμενο συρταριού 2.</p>');
       drawer2.addClass('drawer');
       drawer2.style('top', '400px');
       drawer2.style('height', '300px');
-      drawer2.position(windowWidth - 250, 400);
+      drawer2.style('right', '-250px');
 
-      // Δημιουργία κουμπιών εναλλαγής για κάθε συρτάρι
+      // Δημιουργία κουμπιών για την εναλλαγή των συρταριών
       toggleBtn1 = createButton('Toggle Συρτάρι 1');
       toggleBtn1.addClass('toggleBtn');
-      toggleBtn1.position(windowWidth - 350, 60); // τοποθέτηση δίπλα στο πρώτο συρτάρι
+      // Τοποθέτηση του κουμπιού λίγο πιο αριστερά από το πρώτο συρτάρι
+      toggleBtn1.position(windowWidth - 300, 70);
       toggleBtn1.mousePressed(toggleDrawer1);
 
       toggleBtn2 = createButton('Toggle Συρτάρι 2');
       toggleBtn2.addClass('toggleBtn');
-      toggleBtn2.position(windowWidth - 350, 410); // τοποθέτηση δίπλα στο δεύτερο συρτάρι
+      toggleBtn2.position(windowWidth - 300, 420);
       toggleBtn2.mousePressed(toggleDrawer2);
     }
 
-    // Συνάρτηση εναλλαγής για το πρώτο συρτάρι
+    // Συνάρτηση για την εναλλαγή εμφάνισης του πρώτου συρταριού
     function toggleDrawer1() {
       if (drawer1.elt.classList.contains('active')) {
-        drawer1.removeClass('active');
+        drawer1.elt.classList.remove('active');
       } else {
-        drawer1.addClass('active');
+        drawer1.elt.classList.add('active');
       }
     }
 
-    // Συνάρτηση εναλλαγής για το δεύτερο συρτάρι
+    // Συνάρτηση για την εναλλαγή εμφάνισης του δεύτερου συρταριού
     function toggleDrawer2() {
       if (drawer2.elt.classList.contains('active')) {
-        drawer2.removeClass('active');
+        drawer2.elt.classList.remove('active');
       } else {
-        drawer2.addClass('active');
+        drawer2.elt.classList.add('active');
       }
     }
 
-    // Ενημέρωση της τοποθέτησης σε περίπτωση αλλαγής μεγέθους παραθύρου
+    // Ενημέρωση θέσεων σε περίπτωση αλλαγής μεγέθους παραθύρου
     function windowResized() {
       resizeCanvas(windowWidth, windowHeight);
-      // Αναπροσαρμογή των drawer
-      if (!drawer1.elt.classList.contains('active')) {
-        drawer1.position(windowWidth - 250, 50);
-      } else {
-        // Εάν είναι ενεργό, τοποθετούμε το drawer με right:0
-        drawer1.position(windowWidth - 250, 50);
-      }
-      if (!drawer2.elt.classList.contains('active')) {
-        drawer2.position(windowWidth - 250, 400);
-      } else {
-        drawer2.position(windowWidth - 250, 400);
-      }
-      // Ενημέρωση θέσεων των κουμπιών
-      toggleBtn1.position(windowWidth - 350, 60);
-      toggleBtn2.position(windowWidth - 350, 410);
+      toggleBtn1.position(windowWidth - 300, 70);
+      toggleBtn2.position(windowWidth - 300, 420);
     }
   </script>
 </body>
