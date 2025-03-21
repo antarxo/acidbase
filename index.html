@@ -3,103 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Διαδραστικό Πλαϊνό Μενού</title>
+  <title>Δύο Δεξιά Συρτάρια με p5.js</title>
+  <!-- Φόρτωση της βιβλιοθήκης p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      overflow-x: hidden;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
     }
-
-    /* Στυλ για το πλαϊνό μενού */
-    .sidebar {
+    /* Στυλ για τα συρτάρια */
+    .drawer {
       width: 250px;
       height: 100vh;
       position: fixed;
       top: 0;
-      left: -250px; /* Αρχικά κρυφό */
-      background-color: #333;
-      color: white;
+      right: -250px; /* Αρχικά εκτός οθόνης */
+      background-color: #444;
+      color: #fff;
       padding: 20px;
-      transition: left 0.3s ease-in-out;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.5);
-      z-index: 1000;
+      box-sizing: border-box;
+      transition: right 0.3s ease-in-out;
+      z-index: 10;
     }
-
-    /* Όταν το μενού είναι ανοιχτό */
-    .sidebar.active {
-      left: 0;
+    /* Όταν το συρτάρι είναι ενεργό, τοποθετείται στην οθόνη */
+    .drawer.active {
+      right: 0;
     }
-
-    /* Κουμπί για άνοιγμα/κλείσιμο */
-    .toggle-btn {
+    /* Στυλ για τα κουμπιά εναλλαγής */
+    .toggleBtn {
       position: fixed;
       top: 20px;
-      left: 20px;
+      right: 20px;
       background-color: #007bff;
-      color: white;
-      padding: 10px 15px;
+      color: #fff;
       border: none;
+      padding: 10px 15px;
       cursor: pointer;
+      z-index: 20;
       border-radius: 5px;
-      z-index: 1100;
+      font-size: 14px;
     }
-
-    /* Στυλ για περιεχόμενο */
-    .content {
-      margin: 50px;
-      padding: 20px;
+    .toggleBtn2 {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      z-index: 20;
+      border-radius: 5px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-
-  <!-- Κουμπί άνοιγμα/κλείσιμο -->
-  <button class="toggle-btn" id="toggleBtn">☰ Ρυθμίσεις</button>
-
-  <!-- Πλαϊνό μενού -->
-  <div class="sidebar" id="sidebar">
-    <h2>Ρυθμίσεις</h2>
-    <p>Εδώ μπορείς να αλλάξεις διάφορες ρυθμίσεις της εφαρμογής.</p>
-    <ul>
-      <li><a href="#" style="color: #fff; text-decoration: none;">Ρυθμίσεις Λογαριασμού</a></li>
-      <li><a href="#" style="color: #fff; text-decoration: none;">Ειδοποιήσεις</a></li>
-      <li><a href="#" style="color: #fff; text-decoration: none;">Απόρρητο</a></li>
-      <li><a href="#" style="color: #fff; text-decoration: none;">Βοήθεια</a></li>
-    </ul>
-    <!-- Κουμπί κλεισίματος μέσα στο μενού -->
-    <button class="toggle-btn" id="closeBtn" style="top: auto; bottom: 20px;">✖ Κλείσιμο</button>
-  </div>
-
-  <!-- Κύριο περιεχόμενο -->
-  <div class="content">
-    <h1>Καλώς ήρθατε!</h1>
-    <p>Αυτό είναι το κύριο περιεχόμενο της σελίδας. Κάντε κλικ στο κουμπί "Ρυθμίσεις" για να δείτε το πλαϊνό μενού.</p>
-  </div>
-
   <script>
-    const sidebar = document.getElementById("sidebar");
-    const toggleBtn = document.getElementById("toggleBtn");
-    const closeBtn = document.getElementById("closeBtn");
-
-    // Λειτουργία για άνοιγμα/κλείσιμο του sidebar
-    function toggleSidebar() {
-      sidebar.classList.toggle("active");
+    let drawer1, drawer2;
+    let toggleBtn, toggleBtn2;
+    
+    function setup() {
+      // Δημιουργία canvas (μπορείς να το χρησιμοποιήσεις για animation ή background)
+      createCanvas(windowWidth, windowHeight);
+      background(220);
+      
+      // Δημιουργία του πρώτου συρταριού με p5.js createDiv
+      drawer1 = createDiv('<h2>Drawer 1</h2><p>Περιεχόμενο του πρώτου συρταριού.</p>');
+      drawer1.addClass('drawer');
+      // Αρχική τοποθέτηση: offscreen στη δεξιά πλευρά
+      drawer1.position(windowWidth - 250, 0);
+      
+      // Δημιουργία του δεύτερου συρταριού
+      drawer2 = createDiv('<h2>Drawer 2</h2><p>Περιεχόμενο του δεύτερου συρταριού.</p>');
+      drawer2.addClass('drawer');
+      // Μετατοπίστε το δεύτερο συρτάρι για να μην επικαλύπτεται το πρώτο, π.χ. πιο κάτω
+      drawer2.style('top', '150px');
+      drawer2.position(windowWidth - 250, 0);
+      
+      // Δημιουργία των κουμπιών εναλλαγής με p5.js createButton
+      toggleBtn = createButton('Toggle Drawer 1');
+      toggleBtn.addClass('toggleBtn');
+      toggleBtn.mousePressed(toggleDrawer1);
+      
+      toggleBtn2 = createButton('Toggle Drawer 2');
+      toggleBtn2.addClass('toggleBtn2');
+      toggleBtn2.mousePressed(toggleDrawer2);
     }
-
-    // Κλικ στα κουμπιά για εναλλαγή του sidebar
-    toggleBtn.addEventListener("click", toggleSidebar);
-    closeBtn.addEventListener("click", toggleSidebar);
-
-    // Κλείσιμο του sidebar όταν γίνεται κλικ εκτός αυτού
-    document.addEventListener("click", function(event) {
-      // Αν το sidebar είναι ανοιχτό και ο στόχος του click δεν είναι μέσα στο sidebar ή στο toggle κουμπί
-      if (sidebar.classList.contains("active") && !sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
-        sidebar.classList.remove("active");
+    
+    // Συνάρτηση εναλλαγής για το πρώτο συρτάρι
+    function toggleDrawer1() {
+      if (drawer1.elt.classList.contains('active')) {
+        drawer1.removeClass('active');
+      } else {
+        drawer1.addClass('active');
       }
-    });
+    }
+    
+    // Συνάρτηση εναλλαγής για το δεύτερο συρτάρι
+    function toggleDrawer2() {
+      if (drawer2.elt.classList.contains('active')) {
+        drawer2.removeClass('active');
+      } else {
+        drawer2.addClass('active');
+      }
+    }
+    
+    // Ενημέρωση του canvas σε περίπτωση αλλαγής μεγέθους παραθύρου
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+      // Επανατοποθέτηση των drawer στην νέα θέση (εκτός οθόνης)
+      if (!drawer1.elt.classList.contains('active')) {
+        drawer1.position(windowWidth - 250, 0);
+      }
+      if (!drawer2.elt.classList.contains('active')) {
+        drawer2.position(windowWidth - 250, 0);
+      }
+    }
   </script>
-  
 </body>
 </html>
