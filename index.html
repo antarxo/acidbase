@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Προσομοίωση - Rescaling, Ευθυγράμμιση & Τροποποιημένες Σταγόνες</title>
+  <title>Προσομοίωση - Εφέ Ripple κατά την Επίδραση της Σταγόνας</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -38,7 +38,7 @@
     let pipetScaledW, pipetScaledH;
     let breakerScaledW, breakerScaledH;
     
-    // Οι θέσεις για τις εικόνες – ευθυγράμμιση στη δεξιά πλευρά
+    // Θέσεις εικόνων – στοιχίζονται στη δεξιά πλευρά
     let pipetX, pipetY;
     let breakerX, breakerY;
     
@@ -47,6 +47,9 @@
     // Ρυθμίσεις για το κόκκινο κουμπί
     let buttonRadius = 15;
     let buttonCenterX, buttonCenterY;
+    
+    // Πίνακας για τα εφέ ripple
+    let rippleEffects = [];
     
     function preload() {
       pipetteImg = loadImage('pipet3.png');
@@ -65,23 +68,21 @@
       let canvasHeight = pipetScaledH + breakerScaledH;
       createCanvas(canvasWidth, canvasHeight).parent("canvas-container");
       
-      // Τοποθετούμε τις εικόνες ώστε η δεξιά τους άκρη να είναι στο ίδιο σημείο:
+      // Τοποθέτηση εικόνων ώστε η δεξιά τους άκρη να ευθυγραμμίζεται:
       pipetX = canvasWidth - pipetScaledW;
       pipetY = 0;
       
       breakerX = canvasWidth - breakerScaledW;
-      // Το breaker τοποθετούμε κάτω από το pipet
       breakerY = pipetScaledH;
       
       let pipetBottom = pipetY + pipetScaledH;
       initialDropY = pipetBottom;
       dropY = initialDropY;
       
-      // Ορισμός του κόκκινου κουμπιού (με μετατόπιση αριστερότερα κατά 8 pixels)
+      // Ορισμός θέσης του κόκκινου κουμπιού (με μετατόπιση αριστερότερα κατά 8 pixels)
       buttonCenterX = pipetX + pipetScaledW - buttonRadius - 5 - 8;
       buttonCenterY = pipetY + buttonRadius + 5 + 15;
       
-      // Δημιουργούμε το κουμπί "Επαναφορά" για επαναφορά της προσομοίωσης
       createButton("Επαναφορά").parent("controls").mousePressed(resetFill);
       
       textFont('Arial');
@@ -92,16 +93,15 @@
     function draw() {
       background(240);
       
-      // Ορίζουμε το "ποτήρι" βάσει της εικόνας breaker.
+      // Ορισμός του "ποτηριού" βάσει της εικόνας breaker
       let containerBottom = breakerY + breakerScaledH - 20;
-      // Το μέγιστο ορατό ύψος του υγρού είναι το 65% του ύψους του breaker
+      // Το μέγιστο ορατό ύψος του υγρού είναι 65% του ύψους του breaker
       let maxLiquidHeight = breakerScaledH * 0.65;
-      let containerTop = containerBottom - maxLiquidHeight;
       
-      // Το ορατό ύψος του υγρού είναι το ελάχιστο μεταξύ του συσσωρευμένου beakerFill και του maxLiquidHeight
+      // Το ορατό ύψος του υγρού είναι το ελάχιστο μεταξύ του beakerFill και του maxLiquidHeight
       let drawnLiquidHeight = min(beakerFill, maxLiquidHeight);
       
-      // Ορισμός πλάτους και θέσης του υγρού μέσα στο ποτήρι
+      // Θέση και πλάτος του υγρού μέσα στο ποτήρι
       let liquidWidth = breakerScaledW * 0.7 - 9;
       let liquidX = (breakerX + (breakerScaledW - liquidWidth) / 2) - 13;
       
@@ -127,25 +127,42 @@
       noStroke();
       
       // --- Z-index 100: Το ποτήρι (breaker), η pipet, η σταγόνα και το κόκκινο κουμπί ---
-      
-      // Σχεδίαση του breaker (ποτηριού)
       imageMode(CORNER);
       image(breakerImg, breakerX, breakerY, breakerScaledW, breakerScaledH);
       
-      // Σχεδίαση και κίνηση της σταγόνας
+      // Κίνηση της σταγόνας και έλεγχος για το σημείο παύσης
       if (dropActive) {
         drawDrop();
         dropY += dropSpeed;
-        if (dropY > containerBottom - (liquidWidth * 0.3) / 2) {
+        // Η σταγόνα σταματά όταν φτάσει στο ύψος του οριζόντιου άξονα της μετακινούμενης έλλειψης
+        let targetY = containerBottom - drawnLiquidHeight; // το κέντρο της πάνω έλλειψης
+        if (dropY > targetY) {
           dropActive = false;
           dropY = initialDropY;
           beakerFill += 3;
           showBaseEllipse = true;
+          // Δημιουργία εφέ ripple όταν η σταγόνα φτάσει στο targetY
+          createRippleEffects(liquidX + liquidWidth / 2, targetY, liquidWidth, liquidWidth * 0.3);
         }
       }
       
-      // Σχεδίαση του pipet
       image(pipetteImg, pipetX, pipetY, pipetScaledW, pipetScaledH);
+      
+      // Εμφάνιση των ripple εφέ
+      for (let i = rippleEffects.length - 1; i >= 0; i--) {
+        let r = rippleEffects[i];
+        noFill();
+        stroke(137, 137, 137, r.alpha);
+        strokeWeight(2);
+        ellipse(r.x, r.y, r.w, r.h);
+        // Ενημέρωση με αύξηση διαστάσεων και μείωση αδιαφάνειας
+        r.w += r.growthRate;
+        r.h += r.growthRate * (r.maxH / r.maxW);
+        r.alpha -= 5;
+        if (r.w >= r.maxW || r.alpha <= 0) {
+          rippleEffects.splice(i, 1);
+        }
+      }
       
       // Σχεδίαση του κόκκινου κουμπιού με πλήρη σκιά και ετικέτα "Πάτα!"
       push();
@@ -164,16 +181,31 @@
       pop();
     }
     
-    // Τροποποιημένη συνάρτηση σχεδίασης της σταγόνας:
-    // Το σημείο εκκίνησης της σταγόνας μετατοπίζεται 50 pixels πιο αριστερά
-    // και το χρώμα της είναι #898989 με opacity περίπου 85% (alpha 217 σε p5.js)
+    // Η σταγόνα ξεκινά από σημείο 50 pixels πιο αριστερά από το κέντρο της pipet
     function drawDrop() {
       push();
-      fill(137, 137, 137, 217);
+      fill(137, 137, 137, 217); // Χρώμα #898989 με opacity ~85%
       noStroke();
-      // Η σταγόνα ξεκινά από pipetX + pipetScaledW/2 - 50
       ellipse(pipetX + pipetScaledW / 2 - 50, dropY, 10, 15);
       pop();
+    }
+    
+    // Δημιουργεί ripple εφέ (3 ελλείψεις) από το σημείο (x,y)
+    // οι παράμετροι maxW, maxH καθορίζουν το τελικό μέγεθος της έλλειψης
+    function createRippleEffects(x, y, maxW, maxH) {
+      let count = 3;
+      for (let i = 0; i < count; i++) {
+        rippleEffects.push({
+          x: x,
+          y: y,
+          w: 0,
+          h: 0,
+          maxW: maxW,
+          maxH: maxH,
+          growthRate: 2 + i, // μικρή παραλλαγή για κάθε ripple
+          alpha: 255
+        });
+      }
     }
     
     function startDrop() {
@@ -187,6 +219,7 @@
       dropY = initialDropY;
       dropActive = false;
       showBaseEllipse = false;
+      rippleEffects = [];
     }
     
     // Έλεγχος αν το κλικ έγινε εντός του κόκκινου κουμπιού
