@@ -16,7 +16,7 @@
     .drawer {
       width: 250px;
       position: fixed;
-      right: -250px; /* Εντελώς κρυμμένο */
+      right: -245px; /* Κρυμμένο εκτός αφήνοντας 5px του κουμπιού */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -34,7 +34,7 @@
     /* Στυλ για το κουμπί */
     .toggleBtn {
       position: absolute;
-      right: -35px; /* Ώστε να είναι πάντα ορατό */
+      right: calc(100% - 5px); /* 5px επικάλυψη στο συρτάρι */
       top: 50%;
       transform: translateY(-50%);
       background-color: #007bff;
@@ -46,11 +46,6 @@
       font-size: 18px;
       z-index: 20;
       transition: right 0.3s ease-in-out;
-    }
-
-    /* Όταν το συρτάρι ανοίγει, το κουμπί κινείται μαζί του */
-    .drawer.active .toggleBtn {
-      right: 215px; /* Κολλημένο στην άκρη του ανοιχτού συρταριού */
     }
   </style>
 </head>
@@ -71,7 +66,7 @@
         this.drawer.style('height', this.height);
         this.drawer.style('width', `${this.width}px`);
 
-        // Δημιουργία του κουμπιού μέσα στο συρτάρι
+        // Δημιουργία του κουμπιού
         this.button = createButton(this.buttonLabel);
         this.button.addClass('toggleBtn');
         this.button.parent(this.drawer);
@@ -79,11 +74,7 @@
       }
 
       toggle() {
-        if (this.drawer.hasClass('active')) {
-          this.drawer.removeClass('active');
-        } else {
-          this.drawer.addClass('active');
-        }
+        this.drawer.toggleClass('active');
       }
     }
 
