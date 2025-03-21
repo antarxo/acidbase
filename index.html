@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Συρτάρια με Ομαλή Κίνηση και Επικάλυψη Κουμπιού</title>
+  <title>Συρτάρια με Κουμπί που Ακολουθεί</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
     body {
@@ -16,7 +16,7 @@
     .drawer {
       width: 250px;
       position: fixed;
-      right: -220px; /* Κρύβεται αφήνοντας 30px εκτός */
+      right: -250px; /* Εντελώς κρυμμένο */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -34,7 +34,7 @@
     /* Στυλ για το κουμπί */
     .toggleBtn {
       position: absolute;
-      right: calc(100% - 5px); /* 5px επικάλυψη */
+      right: -35px; /* Ώστε να είναι πάντα ορατό */
       top: 50%;
       transform: translateY(-50%);
       background-color: #007bff;
@@ -50,7 +50,7 @@
 
     /* Όταν το συρτάρι ανοίγει, το κουμπί κινείται μαζί του */
     .drawer.active .toggleBtn {
-      right: calc(100% + 220px - 5px);
+      right: 215px; /* Κολλημένο στην άκρη του ανοιχτού συρταριού */
     }
   </style>
 </head>
