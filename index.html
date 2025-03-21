@@ -146,14 +146,12 @@
       transition: right 0.3s ease-in-out;
     }
     
-    /* Στυλ για το iframe που ενσωματώνει τα συρτάρια */
-    #drawers-iframe {
+    /* Container για την ενσωμάτωση του drawers p5 instance */
+    #drawers-container {
       position: fixed;
       top: 20px;
       right: 20px;
-      width: 300px;
-      height: 200px;
-      border: none;
+      pointer-events: none; /* ώστε να μην παρεμβαίνει στις ενέργειες της κύριας σελίδας */
       z-index: 100;
     }
   </style>
@@ -228,11 +226,12 @@
     </div>
   </div>
   
-  <!-- Ενσωμάτωση συρταριών μέσω iframe -->
-  <iframe id="drawers-iframe" src="drawers.html"></iframe>
+  <!-- Container για το drawers p5 instance -->
+  <div id="drawers-container"></div>
   
-  <!-- Σκριπτάκια για το AcidBase -->
+  <!-- Σκριπτάκια για το AcidBase (Chart.js & p5.js pipet/beaker) -->
   <script>
+    // Chart.js για το διάγραμμα titration
     let chart;
     const ctx = document.getElementById('titrationChart').getContext('2d');
     
@@ -380,12 +379,12 @@
     }
     
     function resetGlass() {
-      // Εδώ μπορείτε να καλέσετε λειτουργία επαναφοράς στον p5.js καμβά (pipet & beaker)
+      // Για απλή επαναφορά του pipet/beaker p5 sketch επαναφορτώνουμε τη σελίδα
       location.reload();
     }
   </script>
   
-  <!-- p5.js Sketch για pipet & beaker (από το acidebase.html) -->
+  <!-- p5.js Sketch για pipet & beaker (global mode, όπως στο acidebase.html) -->
   <script>
     let pipetteImg, breakerImg;
     let beakerFill = 0;
@@ -603,5 +602,57 @@
       }
     }
   </script>
+  
+  <!-- p5.js Sketch για τα Drawers (instance mode) -->
+  <script>
+    // Μετατρέπουμε τον κώδικα του drawers σε instance mode για απομόνωση
+    const drawersSketch = (p) => {
+      class Drawer {
+        constructor(options) {
+          this.width = options.width || 300;
+          this.top = options.top || '50px';
+          this.height = options.height || '140px';
+          this.content = options.content || '';
+          this.buttonLabel = options.buttonLabel || '|||';
+          // Δημιουργία του στοιχείου του drawer
+          this.drawer = p.createDiv(this.content);
+          this.drawer.addClass('drawer');
+          this.drawer.style('top', this.top);
+          this.drawer.style('height', this.height);
+          this.drawer.style('width', `${this.width}px`);
+          // Δημιουργία του κουμπιού
+          this.button = p.createButton(this.buttonLabel);
+          this.button.addClass('toggleBtn');
+          this.button.parent(this.drawer);
+          this.button.mousePressed(() => this.toggle());
+        }
+        toggle() {
+          this.drawer.toggleClass('active');
+        }
+      }
+      
+      let drawer1, drawer2;
+      
+      p.setup = function() {
+        // Δεν δημιουργούμε canvas για το drawers – τοποθετούμε τα στοιχεία απευθείας
+        // Ωστόσο, για να διατηρηθεί το p5 instance απαιτείται p.createCanvas, οπότε δημιουργούμε ένα μικρό καμβά (μη εμφανιζόμενο)
+        p.createCanvas(1,1).hide();
+        // Δημιουργία δύο drawers
+        drawer1 = new Drawer({
+          top: '100px',
+          height: '140px',
+          content: '<h3>Συρτάρι 1</h3><p>Περιεχόμενο.</p>'
+        });
+        drawer2 = new Drawer({
+          top: '240px',
+          height: '140px',
+          content: '<h3>Συρτάρι 2</h3><p>Άλλο περιεχόμενο.</p>'
+        });
+      }
+    }
+    // Δημιουργούμε το p5 instance για τα drawers και το τοποθετούμε στο div με id "drawers-container"
+    new p5(drawersSketch, 'drawers-container');
+  </script>
+  
 </body>
 </html>
