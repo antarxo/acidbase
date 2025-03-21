@@ -151,7 +151,7 @@
       position: fixed;
       top: 20px;
       right: 20px;
-      pointer-events: none; /* ώστε να μην παρεμβαίνει στις ενέργειες της κύριας σελίδας */
+      /* pointer-events: none; ← Αφαιρέσαμε αυτή την ιδιότητα */
       z-index: 100;
     }
   </style>
@@ -634,8 +634,7 @@
       let drawer1, drawer2;
       
       p.setup = function() {
-        // Δεν δημιουργούμε canvas για το drawers – τοποθετούμε τα στοιχεία απευθείας
-        // Ωστόσο, για να διατηρηθεί το p5 instance απαιτείται p.createCanvas, οπότε δημιουργούμε ένα μικρό καμβά (μη εμφανιζόμενο)
+        // Δημιουργούμε ένα ελάχιστο canvas (κρύφο) για το p5 instance
         p.createCanvas(1,1).hide();
         // Δημιουργία δύο drawers
         drawer1 = new Drawer({
