@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hamburger Button με p5.js</title>
+  <title>Επαναχρησιμοποιήσιμα Drawer με p5.js</title>
   <!-- Φόρτωση της βιβλιοθήκης p5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
@@ -12,11 +12,11 @@
       overflow-x: hidden;
       font-family: Arial, sans-serif;
     }
-    /* Στυλ για το συρτάρι */
+    /* Στυλ για τα συρτάρια */
     .drawer {
       width: 250px;
       position: fixed;
-      right: -250px; /* Αρχικά κρυφό */
+      right: -250px; /* Αρχικά εκτός οθόνης */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -25,18 +25,17 @@
       border: 1px solid #222;
       box-shadow: -2px 0 5px rgba(0,0,0,0.5);
     }
+    /* Όταν το συρτάρι είναι ενεργό */
     .drawer.active {
       right: 0;
     }
     /* Στυλ για το κουμπί τύπου hamburger */
     .toggleBtn {
       position: fixed;
-      top: 20px;
-      right: 300px; /* λίγο αριστερά του συρταριού */
       background-color: #007bff;
       color: #fff;
       border: none;
-      padding: 10px;
+      padding: 8px 12px;
       cursor: pointer;
       border-radius: 5px;
       font-size: 18px;
@@ -46,64 +45,81 @@
 </head>
 <body>
   <script>
+    // Ορισμός της κλάσης Drawer για δημιουργία επαναχρησιμοποιήσιμων συρταριών
+    class Drawer {
+      constructor(options) {
+        this.width = options.width || 250;
+        this.top = options.top || '50px';
+        this.height = options.height || '300px';
+        this.content = options.content || '';
+        this.buttonLabel = options.buttonLabel || '|||';
+        // Αν δεν οριστεί ρητά, ορίζουμε το κουμπί να τοποθετείται 50px πιο αριστερά από το drawer
+        this.buttonPosition = options.buttonPosition || { 
+          x: window.innerWidth - this.width - 50, 
+          y: parseInt(this.top) + 20 
+        };
+
+        // Δημιουργία του drawer με τη χρήση της p5.js createDiv
+        this.drawer = createDiv(this.content);
+        this.drawer.addClass('drawer');
+        this.drawer.style('top', this.top);
+        this.drawer.style('height', this.height);
+        this.drawer.style('width', `${this.width}px`);
+        // Η αρχική θέση (εκτός οθόνης) καθορίζεται από το CSS (right: -250px)
+
+        // Δημιουργία του κουμπιού για εναλλαγή εμφάνισης του drawer
+        this.button = createButton(this.buttonLabel);
+        this.button.addClass('toggleBtn');
+        this.button.position(this.buttonPosition.x, this.buttonPosition.y);
+        // Όταν πατηθεί το κουμπί, καλείται η μέθοδος toggle()
+        this.button.mousePressed(() => this.toggle());
+
+        // Ανανεώνουμε τη θέση του κουμπιού σε περίπτωση αλλαγής μεγέθους παραθύρου
+        window.addEventListener('resize', () => {
+          let newX = window.innerWidth - this.width - 50;
+          this.button.position(newX, parseInt(this.top) + 20);
+        });
+      }
+
+      // Μέθοδος εναλλαγής εμφάνισης του drawer
+      toggle() {
+        if (this.drawer.hasClass('active')) {
+          this.drawer.removeClass('active');
+        } else {
+          this.drawer.addClass('active');
+        }
+      }
+    }
+
+    // Ορισμός δύο μεταβλητών για τα drawers
     let drawer1, drawer2;
-    let toggleBtn1, toggleBtn2;
 
     function setup() {
-      // Δημιουργία canvas (προαιρετικό, για φόντο ή animation)
       createCanvas(windowWidth, windowHeight);
       background(240);
 
-      // Δημιουργία του πρώτου συρταριού: 50px από την κορυφή, ύψος 300px
-      drawer1 = createDiv('<h3>Συρτάρι 1</h3><p>Περιεχόμενο συρταριού 1.</p>');
-      drawer1.addClass('drawer');
-      drawer1.style('top', '50px');
-      drawer1.style('height', '300px');
-      // Το συρτάρι είναι αρχικά κρυφό (καθορίζεται από το CSS)
+      // Δημιουργία του πρώτου drawer
+      drawer1 = new Drawer({
+        top: '50px',
+        height: '300px',
+        content: '<h3>Drawer 1</h3><p>Περιεχόμενο του πρώτου drawer.</p>',
+        buttonLabel: '|||',
+        buttonPosition: { x: window.innerWidth - 300, y: 70 }
+      });
 
-      // Δημιουργία του δεύτερου συρταριού: 400px από την κορυφή, ύψος 300px
-      drawer2 = createDiv('<h3>Συρτάρι 2</h3><p>Περιεχόμενο συρταριού 2.</p>');
-      drawer2.addClass('drawer');
-      drawer2.style('top', '400px');
-      drawer2.style('height', '300px');
-
-      // Δημιουργία κουμπιών τύπου hamburger (με το κείμενο "|||")
-      toggleBtn1 = createButton('|||');
-      toggleBtn1.addClass('toggleBtn');
-      // Τοποθέτηση του κουμπιού δίπλα στο πρώτο συρτάρι
-      toggleBtn1.position(windowWidth - 300, 60);
-      toggleBtn1.mousePressed(toggleDrawer1);
-
-      // Δημιουργία κουμπιού για το δεύτερο συρτάρι
-      toggleBtn2 = createButton('|||');
-      toggleBtn2.addClass('toggleBtn');
-      toggleBtn2.position(windowWidth - 300, 410);
-      toggleBtn2.mousePressed(toggleDrawer2);
+      // Δημιουργία του δεύτερου drawer
+      drawer2 = new Drawer({
+        top: '400px',
+        height: '300px',
+        content: '<h3>Drawer 2</h3><p>Περιεχόμενο του δεύτερου drawer.</p>',
+        buttonLabel: '|||',
+        buttonPosition: { x: window.innerWidth - 300, y: 420 }
+      });
     }
 
-    // Συνάρτηση εναλλαγής εμφάνισης για το πρώτο συρτάρι
-    function toggleDrawer1() {
-      if (drawer1.hasClass('active')) {
-        drawer1.removeClass('active');
-      } else {
-        drawer1.addClass('active');
-      }
-    }
-
-    // Συνάρτηση εναλλαγής εμφάνισης για το δεύτερο συρτάρι
-    function toggleDrawer2() {
-      if (drawer2.hasClass('active')) {
-        drawer2.removeClass('active');
-      } else {
-        drawer2.addClass('active');
-      }
-    }
-
-    // Αναπροσαρμογή θέσεων σε περίπτωση αλλαγής μεγέθους παραθύρου
+    // Αναπροσαρμογή του canvas σε περίπτωση αλλαγής μεγέθους παραθύρου
     function windowResized() {
       resizeCanvas(windowWidth, windowHeight);
-      toggleBtn1.position(windowWidth - 300, 60);
-      toggleBtn2.position(windowWidth - 300, 410);
     }
   </script>
 </body>
