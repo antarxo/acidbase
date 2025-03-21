@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Δύο Συρτάρια με p5.js</title>
+  <title>Hamburger Button με p5.js</title>
   <!-- Φόρτωση της βιβλιοθήκης p5.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
@@ -12,11 +12,11 @@
       overflow-x: hidden;
       font-family: Arial, sans-serif;
     }
-    /* Στυλ για τα συρτάρια */
+    /* Στυλ για το συρτάρι */
     .drawer {
       width: 250px;
       position: fixed;
-      right: -250px; /* Αρχικά εκτός οθόνης */
+      right: -250px; /* Αρχικά κρυφό */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -25,20 +25,21 @@
       border: 1px solid #222;
       box-shadow: -2px 0 5px rgba(0,0,0,0.5);
     }
-    /* Όταν προστίθεται η κλάση active, το συρτάρι εμφανίζεται */
     .drawer.active {
       right: 0;
     }
-    /* Στυλ για τα κουμπιά εναλλαγής */
+    /* Στυλ για το κουμπί τύπου hamburger */
     .toggleBtn {
       position: fixed;
+      top: 20px;
+      right: 300px; /* λίγο αριστερά του συρταριού */
       background-color: #007bff;
       color: #fff;
       border: none;
-      padding: 8px 12px;
+      padding: 10px;
       cursor: pointer;
       border-radius: 5px;
-      font-size: 14px;
+      font-size: 18px;
       z-index: 20;
     }
   </style>
@@ -58,25 +59,25 @@
       drawer1.addClass('drawer');
       drawer1.style('top', '50px');
       drawer1.style('height', '300px');
-      // Αρχική κατάσταση: κρυφό (right: -250px) καθορίζεται από το CSS
+      // Το συρτάρι είναι αρχικά κρυφό (καθορίζεται από το CSS)
 
       // Δημιουργία του δεύτερου συρταριού: 400px από την κορυφή, ύψος 300px
       drawer2 = createDiv('<h3>Συρτάρι 2</h3><p>Περιεχόμενο συρταριού 2.</p>');
       drawer2.addClass('drawer');
       drawer2.style('top', '400px');
       drawer2.style('height', '300px');
-      // Αρχική κατάσταση: κρυφό
 
-      // Δημιουργία κουμπιών για την εναλλαγή των συρταριών
-      toggleBtn1 = createButton('Toggle Συρτάρι 1');
+      // Δημιουργία κουμπιών τύπου hamburger (με το κείμενο "|||")
+      toggleBtn1 = createButton('|||');
       toggleBtn1.addClass('toggleBtn');
-      // Τοποθέτηση του κουμπιού λίγο πιο αριστερά από το πρώτο συρτάρι
-      toggleBtn1.position(windowWidth - 300, 70);
+      // Τοποθέτηση του κουμπιού δίπλα στο πρώτο συρτάρι
+      toggleBtn1.position(windowWidth - 300, 60);
       toggleBtn1.mousePressed(toggleDrawer1);
 
-      toggleBtn2 = createButton('Toggle Συρτάρι 2');
+      // Δημιουργία κουμπιού για το δεύτερο συρτάρι
+      toggleBtn2 = createButton('|||');
       toggleBtn2.addClass('toggleBtn');
-      toggleBtn2.position(windowWidth - 300, 420);
+      toggleBtn2.position(windowWidth - 300, 410);
       toggleBtn2.mousePressed(toggleDrawer2);
     }
 
@@ -98,11 +99,11 @@
       }
     }
 
-    // Ενημέρωση θέσεων σε περίπτωση αλλαγής μεγέθους παραθύρου
+    // Αναπροσαρμογή θέσεων σε περίπτωση αλλαγής μεγέθους παραθύρου
     function windowResized() {
       resizeCanvas(windowWidth, windowHeight);
-      toggleBtn1.position(windowWidth - 300, 70);
-      toggleBtn2.position(windowWidth - 300, 420);
+      toggleBtn1.position(windowWidth - 300, 60);
+      toggleBtn2.position(windowWidth - 300, 410);
     }
   </script>
 </body>
