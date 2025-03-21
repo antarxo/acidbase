@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
   <meta charset="UTF-8">
-  <title>Mockup Layout - AcidBase & Glass</title>
+  <title>Mockup Layout - Σύμφωνα με το layout.png</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <style>
     body {
@@ -13,23 +13,40 @@
       height: 100vh;
       font-family: Arial, sans-serif;
     }
+    /* Container που χωρίζει το διάγραμμα και το panel οδηγιών/κουμπιών */
     #top-container {
       display: flex;
       flex: 1;
       overflow: hidden;
     }
-    /* Δεξιό panel για ρυθμίσεις */
-    #panel-container {
-      width: 300px;
-      background-color: #f8f8f8;
-      position: relative;
-    }
-    /* Αριστερό διάγραμμα */
+    /* Διάγραμμα (αριστερό μέρος) */
     #diagram-container {
       flex: 1;
       background-color: #fff;
     }
-    /* Κάτω χώρος μηνυμάτων */
+    /* Panel οδηγιών/κουμπιών (δεξί μέρος) */
+    #right-container {
+      width: 480px; /* 60% μεγαλύτερο από 300px */
+      display: flex;
+      flex-direction: column;
+      background-color: #f8f8f8;
+      position: relative;
+    }
+    /* Χώρος οδηγιών (με τα γραφικά του glass & επιλογές acidbase) */
+    #instructions-container {
+      flex: 1;
+      position: relative;
+      padding: 10px;
+      background-color: #eef;
+    }
+    /* Χώρος κουμπιών (κάτω από το instructions) */
+    #buttons-container {
+      height: 100px;
+      background: #ddd;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    /* Χώρος μηνυμάτων (κάτω από το top container) */
     #messages-container {
       height: 100px;
       background: #e0e0e0;
@@ -44,19 +61,27 @@
 <body>
   <div id="top-container">
     <div id="diagram-container"></div>
-    <div id="panel-container"></div>
+    <div id="right-container">
+      <div id="instructions-container">
+        <!-- Εδώ θα ενσωματωθούν τα γραφικά του glass και οι επιλογές του acidbase -->
+        <p style="text-align:center; font-weight:bold;">Οδηγίες & Επιλογές</p>
+      </div>
+      <div id="buttons-container">
+        <!-- Εδώ θα τοποθετηθούν τα πρόσθετα κουμπιά (εκτός του "Πάτα!") -->
+        <p style="text-align:center; font-weight:bold;">Πρόσθετα Κουμπιά</p>
+      </div>
+    </div>
   </div>
   <div id="messages-container">
     <p>Χώρος μηνυμάτων και οδηγιών</p>
   </div>
 
   <script>
-    // Καμβάς για το διάγραμμα (στο αριστερό μέρος)
+    // Καμβάς για το διάγραμμα (αριστερό μέρος)
     let diagramSketch = function(p) {
       p.setup = function() {
-        // Αφαιρούμε το πλάτος του panel και του χώρου μηνυμάτων
-        let w = p.windowWidth - 300;
-        let h = p.windowHeight - 100;
+        let w = p.windowWidth - 480; // αφαιρούμε το πλάτος του δεξιού container
+        let h = p.windowHeight - 100; // αφαιρούμε το ύψος του χώρου μηνυμάτων
         let canvas = p.createCanvas(w, h);
         canvas.parent("diagram-container");
       }
@@ -70,34 +95,57 @@
     }
     new p5(diagramSketch);
 
-    // Καμβάς για το panel ρυθμίσεων (στο δεξί μέρος)
-    let panelSketch = function(p) {
+    // Καμβάς για το panel οδηγιών (στο instructions-container)
+    let instructionsSketch = function(p) {
       p.setup = function() {
-        let w = 300;
-        let h = p.windowHeight - 100;
+        let container = document.getElementById("instructions-container");
+        let w = container.offsetWidth;
+        let h = container.offsetHeight;
         let canvas = p.createCanvas(w, h);
-        canvas.parent("panel-container");
+        canvas.parent("instructions-container");
       }
       p.draw = function() {
         p.background(240);
-        // Παράδειγμα κειμένου στο panel
+        // Ενδεικτική τοποθέτηση των γραφικών στοιχείων του glass
         p.fill(0);
         p.textAlign(p.CENTER, p.CENTER);
         p.textSize(18);
-        p.text("Πάνελ Ρυθμίσεων", p.width/2, 40);
-
-        // Σταθερά κουμπιά στο κάτω δεξί μέρος
+        p.text("Γραφικά του Glass", p.width/2, 40);
+        
+        // Κουμπί "Πάτα!" ενσωματωμένο στο canvas του glass (στην κάτω δεξιά γωνία)
         p.fill(200, 0, 0);
         p.noStroke();
         p.ellipse(p.width - 30, p.height - 30, 50, 50);
         p.fill(255);
         p.textSize(12);
-        p.text("Κουμπί", p.width - 30, p.height - 30);
+        p.text("Πάτα!", p.width - 30, p.height - 30);
+        
+        // Εδώ μπορούν να ενσωματωθούν και τα controls του acidbase (π.χ. dropdowns, sliders κλπ.)
       }
     }
-    new p5(panelSketch);
+    new p5(instructionsSketch);
 
-    // (Προαιρετικά) Καμβάς για μηνύματα - εδώ μπορείτε να τον χρησιμοποιήσετε για οδηγίες ή ενημερώσεις
+    // Καμβάς για τον χώρο κουμπιών (στο buttons-container)
+    let buttonsSketch = function(p) {
+      p.setup = function() {
+        let container = document.getElementById("buttons-container");
+        let w = container.offsetWidth;
+        let h = container.offsetHeight;
+        let canvas = p.createCanvas(w, h);
+        canvas.parent("buttons-container");
+      }
+      p.draw = function() {
+        p.background(200);
+        p.fill(0);
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(18);
+        p.text("Επιπλέον Κουμπιά", p.width/2, p.height/2);
+        // Τα κουμπιά εδώ θα οριστούν ξεχωριστά (χωρίς το "Πάτα!")
+      }
+    }
+    new p5(buttonsSketch);
+
+    // Καμβάς για το χώρο μηνυμάτων (στο messages-container)
     let messagesSketch = function(p) {
       p.setup = function() {
         let canvas = p.createCanvas(p.windowWidth, 100);
