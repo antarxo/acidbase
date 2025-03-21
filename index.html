@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Συρτάρια με Προεξέχοντα Κουμπιά</title>
+  <title>Συρτάρια με Μερικώς Κρυμμένο Κουμπί</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
     body {
@@ -11,11 +11,12 @@
       overflow-x: hidden;
       font-family: Arial, sans-serif;
     }
+
     /* Στυλ για τα συρτάρια */
     .drawer {
       width: 250px;
       position: fixed;
-      right: -230px; /* Σχεδόν κρυμμένο, αφήνει 20px να φαίνονται */
+      right: -250px; /* Εντελώς κρυμμένο */
       background-color: #444;
       color: #fff;
       padding: 20px;
@@ -24,14 +25,16 @@
       border-radius: 10px 0 0 10px;
       box-shadow: -2px 0 5px rgba(0,0,0,0.5);
     }
+
     /* Όταν το συρτάρι είναι ενεργό */
     .drawer.active {
       right: 0;
     }
+
     /* Στυλ για το κουμπί */
     .toggleBtn {
       position: absolute;
-      right: 230px; /* Το κουμπί είναι ελαφρώς μέσα στο συρτάρι */
+      right: -30px; /* Κρυμμένο εν μέρει */
       top: 10px;
       background-color: #007bff;
       color: #fff;
@@ -43,9 +46,10 @@
       z-index: 20;
       transition: right 0.3s ease-in-out;
     }
-    /* Όταν το συρτάρι ανοίγει, μετακινούμε το κουμπί */
+
+    /* Όταν το συρτάρι ανοίγει, το κουμπί εμφανίζεται πλήρως */
     .drawer.active .toggleBtn {
-      right: 250px;
+      right: 10px;
     }
   </style>
 </head>
@@ -59,17 +63,17 @@
         this.content = options.content || '';
         this.buttonLabel = options.buttonLabel || '|||';
 
-        // Δημιουργία drawer
+        // Δημιουργία του συρταριού
         this.drawer = createDiv(this.content);
         this.drawer.addClass('drawer');
         this.drawer.style('top', this.top);
         this.drawer.style('height', this.height);
         this.drawer.style('width', `${this.width}px`);
 
-        // Δημιουργία κουμπιού
+        // Δημιουργία του κουμπιού, μερικώς κρυμμένο
         this.button = createButton(this.buttonLabel);
         this.button.addClass('toggleBtn');
-        this.button.parent(this.drawer); // Το κουμπί είναι μέσα στο drawer
+        this.button.parent(this.drawer); // Το κουμπί είναι child του συρταριού
         this.button.mousePressed(() => this.toggle());
       }
 
@@ -88,14 +92,14 @@
       createCanvas(windowWidth, windowHeight);
       background(240);
 
-      // Πρώτο συρτάρι
+      // Δημιουργία πρώτου συρταριού
       drawer1 = new Drawer({
         top: '100px',
         height: '250px',
         content: '<h3>Συρτάρι 1</h3><p>Περιεχόμενο.</p>'
       });
 
-      // Δεύτερο συρτάρι
+      // Δημιουργία δεύτερου συρταριού
       drawer2 = new Drawer({
         top: '400px',
         height: '250px',
